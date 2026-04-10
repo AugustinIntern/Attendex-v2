@@ -7,18 +7,10 @@ import AppLayout from "@/components/AppLayout";
 import AddEmployeeModal from "@/components/AddEmployeeModal";
 
 interface Employee {
-  idx: number;
   user_id: number;
   emp_code: string;
   email: string;
   admin: boolean;
-}
-
-interface EmployeeStats {
-  user_id: number;
-  total_days: number;
-  present_days: number;
-  attendance_rate: number;
 }
 
 interface EmployeeStats {
@@ -167,7 +159,7 @@ export default function EmployeesPage() {
 
             return (
               <Link
-                key={employee.idx}
+                key={employee.user_id}
                 href={`/employees/${employee.user_id}`}
                 className="block"
               >

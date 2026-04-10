@@ -88,8 +88,8 @@ export async function GET() {
     // Get all employees from allowedpeople table
     const { data, error } = await supabase
       .from("allowedpeople")
-      .select("idx, user_id, emp_code, email, admin")
-      .order("idx");
+      .select("user_id, emp_code, email, admin")
+      .order("user_id");
 
     if (error) {
       console.error("Error fetching employees:", error);
