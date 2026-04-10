@@ -13,7 +13,6 @@ const menuItems = [
   { label: "List of Employees", href: "/employees", icon: "👥" },
   { label: "Add Employee", href: "/employees/add", icon: "➕" },
   { label: "Past Day", href: "/attendance/past", icon: "📅" },
-  { label: "All Attendance", href: "/attendance", icon: "📋" },
   { label: "Statistics", href: "/statistics", icon: "📈" },
   { label: "Update Options", href: "/settings", icon: "⚙️" },
 ];

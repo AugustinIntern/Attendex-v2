@@ -2,7 +2,6 @@
 
 import { useCallback, useEffect, useState } from "react";
 import { supabase } from "@/lib/supabase";
-import PaginationControls from "@/components/PaginationControls";
 
 interface AttendanceLog {
   idx: number;
@@ -18,38 +17,30 @@ interface AttendanceLog {
   paired_with: string | null;
 }
 
-const ITEMS_PER_PAGE = 10;
-
 export default function DashboardPage() {
   const [logs, setLogs] = useState<AttendanceLog[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [currentPage, setCurrentPage] = useState(1);
-  const [totalCount, setTotalCount] = useState(0);
 
   const fetchAttendanceLogs = useCallback(async () => {
     try {
       setLoading(true);
       setError(null);
 
-      // Get total count
-      const { count } = await supabase
-        .from("attendance_logs")
-        .select("*", { count: "exact", head: true });
+      // Calculate today's date range in ISO format.
+      const date = new Date();
+      const year = date.getFullYear();
+      const month = String(date.getMonth() + 1).padStart(2, "0");
+      const day = String(date.getDate()).padStart(2, "0");
+      const todayStart = `${year}-${month}-${day}T00:00:00`;
+      const todayEnd = `${year}-${month}-${day}T23:59:59.999`;
 
-      setTotalCount(count || 0);
-
-      // Calculate offset
-      const offset = (currentPage - 1) * ITEMS_PER_PAGE;
-
-      // Fetch paginated data - get only today's records
-      const today = new Date().toISOString().split("T")[0];
       const { data, error: fetchError } = await supabase
         .from("attendance_logs")
         .select("*")
-        .gte("timestamp", `${today}T00:00:00`)
-        .order("timestamp", { ascending: false })
-        .range(offset, offset + ITEMS_PER_PAGE - 1);
+        .gte("timestamp", todayStart)
+        .lte("timestamp", todayEnd)
+        .order("timestamp", { ascending: false });
 
       if (fetchError) {
         throw fetchError;
@@ -64,17 +55,15 @@ export default function DashboardPage() {
     } finally {
       setLoading(false);
     }
-  }, [currentPage]);
+  }, []);
 
   useEffect(() => {
     fetchAttendanceLogs();
   }, [fetchAttendanceLogs]);
 
-  const totalPages = Math.ceil(totalCount / ITEMS_PER_PAGE);
-
-  // Calculate statistics
+  // Calculate statistics for today's attendance
   const presentCount = logs.filter((log) => log.check_type === 1).length;
-  const absenceCount = totalCount - presentCount;
+  const absenceCount = logs.filter((log) => log.check_type !== 1).length;
 
   if (error) {
     return (
@@ -220,16 +209,7 @@ export default function DashboardPage() {
               </table>
             </div>
 
-            {totalPages > 1 && (
-              <div className="px-6 py-4 border-t border-zinc-200 dark:border-zinc-800">
-                <PaginationControls
-                  currentPage={currentPage}
-                  totalPages={totalPages}
-                  onPageChange={setCurrentPage}
-                />
-              </div>
-            )}
-          </>
+                    </>
         )}
       </div>
     </div>
