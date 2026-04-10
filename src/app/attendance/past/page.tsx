@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { supabase } from "@/lib/supabase";
+import { EMPLOYEE_COUNT, getEmployeeCode } from "@/lib/employees";
 
 interface AttendanceLog {
   idx: number;
@@ -71,8 +72,11 @@ export default function PastDayPage() {
     fetchLogs();
   }, [fetchLogs, selectedDate]);
 
-  const presentCount = logs.filter((log) => log.check_type === 1).length;
-  const absenceCount = logs.filter((log) => log.check_type !== 1).length;
+  const uniquePresentIds = new Set(
+    logs.filter((log) => log.check_type === 1).map((log) => log.user_id)
+  );
+  const presentCount = uniquePresentIds.size;
+  const absenceCount = EMPLOYEE_COUNT - presentCount;
 
   return (
     <div className="space-y-8">
@@ -205,7 +209,7 @@ export default function PastDayPage() {
                     className="border-b border-zinc-200 dark:border-zinc-800 hover:bg-zinc-50 dark:hover:bg-zinc-800 transition-colors"
                   >
                     <td className="px-6 py-4 text-sm text-zinc-900 dark:text-zinc-100 font-medium">
-                      Bradley Augustin
+                      {getEmployeeCode(log.user_id)}
                     </td>
                     <td className="px-6 py-4 text-sm text-zinc-900 dark:text-zinc-100">
                       {log.user_id}
