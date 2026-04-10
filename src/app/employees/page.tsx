@@ -5,16 +5,18 @@ import Link from "next/link";
 import { supabase } from "@/lib/supabase";
 import AppLayout from "@/components/AppLayout";
 import AddEmployeeModal from "@/components/AddEmployeeModal";
+import { getUserIdByIdx } from "@/lib/employees";
 
 interface Employee {
-  user_id: number;
-  emp_code: string;
+  idx: number;
   email: string;
+  password?: string;
   admin: boolean;
+  emp_code?: string;
 }
 
 interface EmployeeStats {
-  user_id: number;
+  idx: number;
   total_days: number;
   present_days: number;
   attendance_rate: number;
@@ -65,7 +67,9 @@ export default function EmployeesPage() {
 
       // Calculate stats for each employee
       const stats: EmployeeStats[] = employeeList.map((employee: Employee) => {
-        const employeeLogs = logs?.filter(log => log.user_id === employee.user_id) || [];
+        // Look up user_id from EMPLOYEES array using idx
+        const userId = getUserIdByIdx(employee.idx);
+        const employeeLogs = (userId && logs) ? logs.filter(log => log.user_id === userId) : [];
         const uniqueDays = new Set(
           employeeLogs.map(log => new Date(log.timestamp).toDateString())
         );
@@ -74,7 +78,7 @@ export default function EmployeesPage() {
         const attendanceRate = totalDays > 0 ? (presentDays / totalDays) * 100 : 0;
 
         return {
-          user_id: employee.user_id,
+          idx: employee.idx,
           total_days: totalDays,
           present_days: presentDays,
           attendance_rate: Math.round(attendanceRate * 100) / 100,
@@ -154,23 +158,23 @@ export default function EmployeesPage() {
         {/* Employee Cards Grid */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {filteredEmployees.map((employee) => {
-            const stats = employeeStats.find(s => s.user_id === employee.user_id);
+            const stats = employeeStats.find(s => s.idx === employee.idx);
             const status = stats ? getAttendanceStatus(stats.attendance_rate) : null;
 
             return (
               <Link
-                key={employee.user_id}
-                href={`/employees/${employee.user_id}`}
+                key={employee.idx}
+                href={`/employees/${employee.idx}`}
                 className="block"
               >
                 <div className="bg-white dark:bg-zinc-800 rounded-lg border border-zinc-200 dark:border-zinc-700 p-6 hover:shadow-lg hover:border-blue-300 dark:hover:border-blue-600 transition-all cursor-pointer">
                   <div className="flex items-start justify-between mb-4">
                     <div>
                       <h3 className="text-lg font-semibold text-zinc-900 dark:text-white">
-                        {employee.emp_code}
+                        {employee.emp_code || "N/A"}
                       </h3>
                       <p className="text-sm text-zinc-600 dark:text-zinc-400">
-                        Employee ID: {employee.user_id}
+                        Employee ID: {employee.idx}
                       </p>
                     </div>
                     <div className="w-12 h-12 bg-gradient-to-br from-blue-500 to-purple-600 rounded-full flex items-center justify-center">

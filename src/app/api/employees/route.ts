@@ -3,11 +3,11 @@ import { supabase } from "@/lib/supabase";
 
 export async function POST(request: NextRequest) {
   try {
-    const { emp_code, user_id } = await request.json();
+    const { emp_code } = await request.json();
 
-    if (!emp_code || !user_id) {
+    if (!emp_code) {
       return NextResponse.json(
-        { error: "Employee code and user ID are required" },
+        { error: "Employee code is required" },
         { status: 400 }
       );
     }
@@ -17,20 +17,6 @@ export async function POST(request: NextRequest) {
       return NextResponse.json(
         { error: "Employee code must be in format: XXX# (e.g., MBX8, BLK2)" },
         { status: 400 }
-      );
-    }
-
-    // Check if user_id already exists
-    const { data: existingEmployee, error: checkError } = await supabase
-      .from("allowedpeople")
-      .select("user_id")
-      .eq("user_id", user_id)
-      .single();
-
-    if (existingEmployee) {
-      return NextResponse.json(
-        { error: "An employee with this user ID already exists" },
-        { status: 409 }
       );
     }
 
@@ -53,10 +39,9 @@ export async function POST(request: NextRequest) {
       .from("allowedpeople")
       .insert([
         {
-          email: `${emp_code.toLowerCase()}@company.com`, // Generate email
-          password: "password123", // Default password
-          admin: false, // New employees are not admins by default
-          user_id: user_id,
+          email: `${emp_code.toLowerCase()}@company.com`,
+          password: "password123",
+          admin: false,
           emp_code: emp_code,
         }
       ])
@@ -88,8 +73,8 @@ export async function GET() {
     // Get all employees from allowedpeople table
     const { data, error } = await supabase
       .from("allowedpeople")
-      .select("user_id, emp_code, email, admin")
-      .order("user_id");
+      .select("idx, email, password, admin, emp_code")
+      .order("idx");
 
     if (error) {
       console.error("Error fetching employees:", error);

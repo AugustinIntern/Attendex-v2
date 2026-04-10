@@ -1,7 +1,6 @@
 "use client";
 
 import { useState } from "react";
-import { useRouter } from "next/navigation";
 
 interface AddEmployeeModalProps {
   isOpen: boolean;
@@ -11,7 +10,6 @@ interface AddEmployeeModalProps {
 
 export default function AddEmployeeModal({ isOpen, onClose, onSuccess }: AddEmployeeModalProps) {
   const [empCode, setEmpCode] = useState("");
-  const [userId, setUserId] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
 
@@ -26,7 +24,6 @@ export default function AddEmployeeModal({ isOpen, onClose, onSuccess }: AddEmpl
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           emp_code: empCode.toUpperCase(),
-          user_id: parseInt(userId),
         }),
       });
 
@@ -40,18 +37,11 @@ export default function AddEmployeeModal({ isOpen, onClose, onSuccess }: AddEmpl
       onSuccess();
       onClose();
       setEmpCode("");
-      setUserId("");
     } catch (err) {
       setError(err instanceof Error ? err.message : "An error occurred");
     } finally {
       setLoading(false);
     }
-  };
-
-  const generateNextUserId = () => {
-    // Generate next available user ID (you can modify this logic)
-    const nextId = Math.max(...Array.from({ length: 20 }, (_, i) => i + 1)) + 1;
-    setUserId(nextId.toString());
   };
 
   if (!isOpen) return null;
@@ -94,36 +84,6 @@ export default function AddEmployeeModal({ isOpen, onClose, onSuccess }: AddEmpl
             />
             <p className="text-xs text-zinc-600 dark:text-zinc-400 mt-1">
               Format: XXX# (3 letters + 1 number, e.g., MBX8)
-            </p>
-          </div>
-
-          {/* User ID */}
-          <div>
-            <label htmlFor="userId" className="block text-sm font-medium text-zinc-900 dark:text-white mb-2">
-              User ID
-            </label>
-            <div className="flex gap-2">
-              <input
-                id="userId"
-                type="number"
-                value={userId}
-                onChange={(e) => setUserId(e.target.value)}
-                placeholder="e.g., 13"
-                className="flex-1 px-4 py-2 rounded-lg border border-zinc-300 dark:border-zinc-600 bg-white dark:bg-zinc-700 text-zinc-900 dark:text-white placeholder-zinc-500 dark:placeholder-zinc-400 focus:outline-none focus:ring-2 focus:ring-blue-500"
-                required
-                min="1"
-              />
-              <button
-                type="button"
-                onClick={generateNextUserId}
-                className="px-3 py-2 bg-zinc-100 dark:bg-zinc-700 hover:bg-zinc-200 dark:hover:bg-zinc-600 text-zinc-700 dark:text-zinc-300 rounded-lg transition-colors text-sm"
-                title="Generate next available ID"
-              >
-                Auto
-              </button>
-            </div>
-            <p className="text-xs text-zinc-600 dark:text-zinc-400 mt-1">
-              Unique numeric identifier for the employee
             </p>
           </div>
 

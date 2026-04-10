@@ -28,3 +28,7 @@ const employeeMap = new Map<number, string>(
 export function getEmployeeCode(userId: number) {
   return employeeMap.get(userId) ?? `User ${userId}`;
 }
+
+export function getUserIdByIdx(idx: number): number | undefined {
+  return EMPLOYEES.find(e => e.idx === idx)?.user_id;
+}
