@@ -12,9 +12,9 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Query allowed_people table
+    // Query allowedpeople table (note: no underscore)
     const { data, error } = await supabase
-      .from("allowed_people")
+      .from("allowedpeople")
       .select("*")
       .eq("email", email)
       .eq("password", password)
