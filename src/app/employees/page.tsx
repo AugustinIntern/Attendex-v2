@@ -2,9 +2,24 @@
 
 import { useState, useEffect, useMemo } from "react";
 import Link from "next/link";
-import { EMPLOYEES, EMPLOYEE_COUNT, getEmployeeCode } from "@/lib/employees";
 import { supabase } from "@/lib/supabase";
 import AppLayout from "@/components/AppLayout";
+import AddEmployeeModal from "@/components/AddEmployeeModal";
+
+interface Employee {
+  idx: number;
+  user_id: number;
+  emp_code: string;
+  email: string;
+  admin: boolean;
+}
+
+interface EmployeeStats {
+  user_id: number;
+  total_days: number;
+  present_days: number;
+  attendance_rate: number;
+}
 
 interface EmployeeStats {
   user_id: number;
@@ -14,9 +29,11 @@ interface EmployeeStats {
 }
 
 export default function EmployeesPage() {
+  const [employees, setEmployees] = useState<Employee[]>([]);
   const [employeeStats, setEmployeeStats] = useState<EmployeeStats[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
+  const [showAddModal, setShowAddModal] = useState(false);
 
   useEffect(() => {
     fetchEmployeeStats();
@@ -25,6 +42,17 @@ export default function EmployeesPage() {
   const fetchEmployeeStats = async () => {
     try {
       setLoading(true);
+First, fetch all employees from the API
+      const employeesResponse = await fetch("/api/employees");
+      const employeesData = await employeesResponse.json();
+
+      if (!employeesResponse.ok) {
+        console.error("Error fetching employees:", employeesData.error);
+        return;
+      }
+
+      const employeeList = employeesData.employees || [];
+      setEmployees(employeeList);
 
       // Get attendance logs for the current month
       const now = new Date();
@@ -43,6 +71,7 @@ export default function EmployeesPage() {
       }
 
       // Calculate stats for each employee
+      const stats: EmployeeStats[] = employeeList.map((employee: E
       const stats: EmployeeStats[] = EMPLOYEES.map((employee) => {
         const employeeLogs = logs?.filter(log => log.user_id === employee.user_id) || [];
         const uniqueDays = new Set(
@@ -57,12 +86,12 @@ export default function EmployeesPage() {
           total_days: totalDays,
           present_days: presentDays,
           attendance_rate: Math.round(attendanceRate * 100) / 100,
-        };
-      });
-
-      setEmployeeStats(stats);
-    } catch (error) {
-      console.error("Error fetching employee stats:", error);
+        };employees.filter((employee) => {
+      const empCode = employee.emp_code.toLowerCase();
+      const searchLower = searchTerm.toLowerCase();
+      return empCode.includes(searchLower);
+    });
+  }, [employees, console.error("Error fetching employee stats:", error);
     } finally {
       setLoading(false);
     }
@@ -99,13 +128,16 @@ export default function EmployeesPage() {
           <div className="flex items-center gap-6">
             <div className="text-center">
               <p className="text-2xl font-bold text-zinc-900 dark:text-white">
-                {EMPLOYEE_COUNT}
+                {employees.length}
               </p>
               <p className="text-sm text-zinc-600 dark:text-zinc-400">
                 Total Employees
               </p>
             </div>
-            <button className="px-4 py-2 bg-gradient-to-r from-blue-600 to-cyan-600 hover:from-blue-700 hover:to-cyan-700 text-white font-semibold rounded-lg transition-all flex items-center gap-2">
+            <button
+              onClick={() => setShowAddModal(true)}
+              className="px-4 py-2 bg-gradient-to-r from-blue-600 to-cyan-600 hover:from-blue-700 hover:to-cyan-700 text-white font-semibold rounded-lg transition-all flex items-center gap-2"
+            >
               <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
               </svg>
@@ -225,6 +257,15 @@ export default function EmployeesPage() {
           </div>
         )}
       </div>
+
+      {/* Add Employee Modal */}
+      <AddEmployeeModal
+        isOpen={showAddModal}
+        onClose={() => setShowAddModal(false)}
+        onSuccess={() => {
+          fetchEmployeeStats(); // Refresh the employee list
+        }}
+      />
     </AppLayout>
   );
 }
