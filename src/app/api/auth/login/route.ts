@@ -20,7 +20,15 @@ export async function POST(request: NextRequest) {
       .eq("password", password)
       .single();
 
-    if (error || !data) {
+    if (error) {
+      console.error("Supabase error:", error);
+      return NextResponse.json(
+        { error: "Invalid email or password" },
+        { status: 401 }
+      );
+    }
+
+    if (!data) {
       return NextResponse.json(
         { error: "Invalid email or password" },
         { status: 401 }

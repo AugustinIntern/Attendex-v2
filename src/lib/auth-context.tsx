@@ -45,12 +45,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         body: JSON.stringify({ email, password }),
       });
 
+      const userData = await response.json();
+
       if (!response.ok) {
-        throw new Error("Invalid email or password");
+        throw new Error(userData.error || "Invalid email or password");
       }
 
-      const userData: User = await response.json();
-      setUser(userData);
+      setUser(userData as User);
       localStorage.setItem("attendex_user", JSON.stringify(userData));
     } finally {
       setIsLoading(false);

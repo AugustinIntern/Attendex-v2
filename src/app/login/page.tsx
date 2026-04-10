@@ -16,12 +16,15 @@ export default function LoginPage() {
     setError("");
 
     try {
+      console.log("Attempting login with:", { email, password });
       await login(email, password);
+      console.log("Login successful");
       router.push("/dashboard");
     } catch (err) {
-      setError(
-        err instanceof Error ? err.message : "Login failed. Please try again."
-      );
+      const errorMessage =
+        err instanceof Error ? err.message : "Login failed. Please try again.";
+      console.error("Login error:", errorMessage, err);
+      setError(errorMessage);
     }
   };
 
