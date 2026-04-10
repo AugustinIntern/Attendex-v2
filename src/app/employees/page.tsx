@@ -42,7 +42,8 @@ export default function EmployeesPage() {
   const fetchEmployeeStats = async () => {
     try {
       setLoading(true);
-First, fetch all employees from the API
+
+      // First, fetch all employees from the API
       const employeesResponse = await fetch("/api/employees");
       const employeesData = await employeesResponse.json();
 
