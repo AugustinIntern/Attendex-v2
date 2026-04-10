@@ -11,7 +11,6 @@ interface SidebarProps {
 const menuItems = [
   { label: "Dashboard", href: "/dashboard", icon: "📊" },
   { label: "List of Employees", href: "/employees", icon: "👥" },
-  { label: "Add Employee", href: "/employees/add", icon: "➕" },
   { label: "Past Day", href: "/attendance/past", icon: "📅" },
   { label: "Statistics", href: "/statistics", icon: "📈" },
   { label: "Update Options", href: "/settings", icon: "⚙️" },

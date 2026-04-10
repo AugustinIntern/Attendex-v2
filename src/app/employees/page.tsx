@@ -96,13 +96,21 @@ export default function EmployeesPage() {
               Manage and view employee information and attendance statistics
             </p>
           </div>
-          <div className="text-right">
-            <p className="text-2xl font-bold text-zinc-900 dark:text-white">
-              {EMPLOYEE_COUNT}
-            </p>
-            <p className="text-sm text-zinc-600 dark:text-zinc-400">
-              Total Employees
-            </p>
+          <div className="flex items-center gap-6">
+            <div className="text-center">
+              <p className="text-2xl font-bold text-zinc-900 dark:text-white">
+                {EMPLOYEE_COUNT}
+              </p>
+              <p className="text-sm text-zinc-600 dark:text-zinc-400">
+                Total Employees
+              </p>
+            </div>
+            <button className="px-4 py-2 bg-gradient-to-r from-blue-600 to-cyan-600 hover:from-blue-700 hover:to-cyan-700 text-white font-semibold rounded-lg transition-all flex items-center gap-2">
+              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+              </svg>
+              Add Employee
+            </button>
           </div>
         </div>
 
