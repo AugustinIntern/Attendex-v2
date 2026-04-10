@@ -28,8 +28,11 @@ export async function POST(request: NextRequest) {
     }
 
     // Return user data (without password)
-    const { password, ...userWithoutPassword } = data;
-    return NextResponse.json(userWithoutPassword);
+    return NextResponse.json({
+      email: data.email,
+      admin: data.admin,
+      idx: data.idx,
+    });
   } catch (error) {
     console.error("Login error:", error);
     return NextResponse.json(
