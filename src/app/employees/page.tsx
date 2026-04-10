@@ -72,14 +72,13 @@ export default function EmployeesPage() {
       }
 
       // Calculate stats for each employee
-      const stats: EmployeeStats[] = employeeList.map((employee: E
-      const stats: EmployeeStats[] = EMPLOYEES.map((employee) => {
+      const stats: EmployeeStats[] = employeeList.map((employee: Employee) => {
         const employeeLogs = logs?.filter(log => log.user_id === employee.user_id) || [];
         const uniqueDays = new Set(
           employeeLogs.map(log => new Date(log.timestamp).toDateString())
         );
         const presentDays = uniqueDays.size;
-        const totalDays = Math.min(now.getDate(), 31); // Current day or max 31
+        const totalDays = Math.min(now.getDate(), 31);
         const attendanceRate = totalDays > 0 ? (presentDays / totalDays) * 100 : 0;
 
         return {
@@ -87,24 +86,24 @@ export default function EmployeesPage() {
           total_days: totalDays,
           present_days: presentDays,
           attendance_rate: Math.round(attendanceRate * 100) / 100,
-        };employees.filter((employee) => {
-      const empCode = employee.emp_code.toLowerCase();
-      const searchLower = searchTerm.toLowerCase();
-      return empCode.includes(searchLower);
-    });
-  }, [employees, console.error("Error fetching employee stats:", error);
+        };
+      });
+
+      setEmployeeStats(stats);
+    } catch (error) {
+      console.error("Error fetching employee stats:", error);
     } finally {
       setLoading(false);
     }
   };
 
   const filteredEmployees = useMemo(() => {
-    return EMPLOYEES.filter((employee) => {
+    return employees.filter((employee) => {
       const empCode = employee.emp_code.toLowerCase();
       const searchLower = searchTerm.toLowerCase();
       return empCode.includes(searchLower);
     });
-  }, [searchTerm]);
+  }, [employees, searchTerm]);
 
   const getAttendanceStatus = (rate: number) => {
     if (rate >= 90) return { label: "Excellent", color: "text-green-600 bg-green-50" };
