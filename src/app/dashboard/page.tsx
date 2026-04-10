@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useState } from "react";
 import { supabase } from "@/lib/supabase";
-import { EMPLOYEE_COUNT, getEmployeeCode } from "@/lib/employees";
+import { getAllEmployees, getCachedEmployeeCode, getCachedEmployeeCount } from "@/lib/employees";
 
 interface AttendanceLog {
   idx: number;
@@ -22,11 +22,16 @@ export default function DashboardPage() {
   const [logs, setLogs] = useState<AttendanceLog[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [employeeCount, setEmployeeCount] = useState(0);
 
   const fetchAttendanceLogs = useCallback(async () => {
     try {
       setLoading(true);
       setError(null);
+
+      // Load employee data first
+      const employees = await getAllEmployees();
+      setEmployeeCount(employees.length);
 
       // Calculate today's date range in ISO format.
       const date = new Date();
@@ -66,7 +71,7 @@ export default function DashboardPage() {
     logs.filter((log) => log.check_type === 1).map((log) => log.user_id)
   );
   const presentCount = uniquePresentIds.size;
-  const absenceCount = EMPLOYEE_COUNT - presentCount;
+  const absenceCount = employeeCount - presentCount;
 
   if (error) {
     return (
@@ -184,7 +189,7 @@ export default function DashboardPage() {
                       className="border-b border-zinc-200 dark:border-zinc-800 hover:bg-zinc-50 dark:hover:bg-zinc-800 transition-colors"
                     >
                       <td className="px-6 py-4 text-sm text-zinc-900 dark:text-zinc-100 font-medium">
-                        {getEmployeeCode(log.user_id)}
+                        {getCachedEmployeeCode(log.user_id)}
                       </td>
                       <td className="px-6 py-4 text-sm text-zinc-900 dark:text-zinc-100">
                         {log.user_id}

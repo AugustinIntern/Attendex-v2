@@ -1,8 +1,8 @@
-﻿"use client";
+"use client";
 
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { supabase } from "@/lib/supabase";
-import { EMPLOYEE_COUNT, getEmployeeCode } from "@/lib/employees";
+import { getAllEmployees, getEmployeeCode } from "@/lib/employees";
 
 interface AttendanceLog {
   idx: number;
@@ -23,6 +23,23 @@ export default function PastDayPage() {
   const [logs, setLogs] = useState<AttendanceLog[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [employeeCount, setEmployeeCount] = useState(0);
+  const [employeeCodes, setEmployeeCodes] = useState<Map<number, string>>(new Map());
+
+  useEffect(() => {
+    // Load employee data on mount
+    getAllEmployees().then((employees) => {
+      setEmployeeCount(employees.length);
+      // Build a userId -> emp_code map for display
+      const codeMap = new Map<number, string>();
+      employees.forEach((emp) => {
+        getEmployeeCode(emp.user_id).then((code) => {
+          codeMap.set(emp.user_id, code);
+          setEmployeeCodes(new Map(codeMap));
+        });
+      });
+    });
+  }, []);
 
   const formattedDateLabel = useMemo(() => {
     if (!selectedDate) return "Select a date to view attendance";
@@ -76,7 +93,7 @@ export default function PastDayPage() {
     logs.filter((log) => log.check_type === 1).map((log) => log.user_id)
   );
   const presentCount = uniquePresentIds.size;
-  const absenceCount = EMPLOYEE_COUNT - presentCount;
+  const absenceCount = employeeCount - presentCount;
 
   return (
     <div className="space-y-8">
@@ -209,7 +226,7 @@ export default function PastDayPage() {
                     className="border-b border-zinc-200 dark:border-zinc-800 hover:bg-zinc-50 dark:hover:bg-zinc-800 transition-colors"
                   >
                     <td className="px-6 py-4 text-sm text-zinc-900 dark:text-zinc-100 font-medium">
-                      {getEmployeeCode(log.user_id)}
+                      {employeeCodes.get(log.user_id) ?? `User ${log.user_id}`}
                     </td>
                     <td className="px-6 py-4 text-sm text-zinc-900 dark:text-zinc-100">
                       {log.user_id}

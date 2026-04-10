@@ -4,8 +4,6 @@ import { useState, useEffect, useMemo } from "react";
 import Link from "next/link";
 import { supabase } from "@/lib/supabase";
 import AppLayout from "@/components/AppLayout";
-import AddEmployeeModal from "@/components/AddEmployeeModal";
-import { getAllEmployees, EmployeeRecord } from "@/lib/employees";
 
 interface Employee {
   user_id: number;
@@ -20,12 +18,11 @@ interface EmployeeStats {
   attendance_rate: number;
 }
 
-export default function EmployeesPage() {
+export default function ArchivedEmployeesPage() {
   const [employees, setEmployees] = useState<Employee[]>([]);
   const [employeeStats, setEmployeeStats] = useState<EmployeeStats[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
-  const [showAddModal, setShowAddModal] = useState(false);
 
   useEffect(() => {
     fetchEmployeeStats();
@@ -35,8 +32,7 @@ export default function EmployeesPage() {
     try {
       setLoading(true);
 
-      // Fetch employees from the UI API (allowedpeople table)
-      const employeesResponse = await fetch("/api/employees");
+      const employeesResponse = await fetch("/api/employees?archived=true");
       const employeesData = await employeesResponse.json();
 
       if (!employeesResponse.ok) {
@@ -44,12 +40,9 @@ export default function EmployeesPage() {
         return;
       }
 
-      const employeeList: Employee[] = (employeesData.employees || []).filter(
-        (emp: Employee) => !emp.is_archived
-      );
+      const employeeList: Employee[] = employeesData.employees || [];
       setEmployees(employeeList);
 
-      // Get attendance logs for the current month
       const now = new Date();
       const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
       const endOfMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0);
@@ -65,7 +58,6 @@ export default function EmployeesPage() {
         return;
       }
 
-      // Calculate stats for each employee
       const stats: EmployeeStats[] = employeeList.map((employee: Employee) => {
         const userId = employee.user_id;
         const employeeLogs = (userId !== undefined && logs)
@@ -112,14 +104,13 @@ export default function EmployeesPage() {
   return (
     <AppLayout>
       <div className="space-y-6">
-        {/* Header */}
         <div className="flex items-center justify-between">
           <div>
             <h1 className="text-3xl font-bold text-zinc-900 dark:text-white">
-              Active Employees
+              Archived Employees
             </h1>
             <p className="text-zinc-600 dark:text-zinc-400 mt-1">
-              Manage and view employee information and attendance statistics
+              View historical records and statistics for archived employees
             </p>
           </div>
           <div className="flex items-center gap-6">
@@ -128,27 +119,17 @@ export default function EmployeesPage() {
                 {employees.length}
               </p>
               <p className="text-sm text-zinc-600 dark:text-zinc-400">
-                Total Employees
+                Archived Records
               </p>
             </div>
-            <button
-              onClick={() => setShowAddModal(true)}
-              className="px-4 py-2 bg-gradient-to-r from-blue-600 to-cyan-600 hover:from-blue-700 hover:to-cyan-700 text-white font-semibold rounded-lg transition-all flex items-center gap-2"
-            >
-              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
-              </svg>
-              Add Employee
-            </button>
           </div>
         </div>
 
-        {/* Search */}
         <div className="flex items-center gap-4">
           <div className="flex-1 max-w-md">
             <input
               type="text"
-              placeholder="Search employees by code..."
+              placeholder="Search archived employees by code..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
               className="w-full px-4 py-2 rounded-lg border border-zinc-300 dark:border-zinc-600 bg-white dark:bg-zinc-700 text-zinc-900 dark:text-white placeholder-zinc-500 dark:placeholder-zinc-400 focus:outline-none focus:ring-2 focus:ring-blue-500"
@@ -156,7 +137,6 @@ export default function EmployeesPage() {
           </div>
         </div>
 
-        {/* Employee Cards Grid */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {filteredEmployees.map((employee) => {
             const stats = employeeStats.find(s => s.user_id === employee.user_id);
@@ -166,20 +146,26 @@ export default function EmployeesPage() {
               <Link
                 key={employee.user_id}
                 href={`/employees/${employee.user_id}`}
-                className="block"
+                className="block opacity-80 hover:opacity-100 transition-opacity"
               >
-                <div className="bg-white dark:bg-zinc-800 rounded-lg border border-zinc-200 dark:border-zinc-700 p-6 hover:shadow-lg hover:border-blue-300 dark:hover:border-blue-600 transition-all cursor-pointer">
-                  <div className="flex items-start justify-between mb-4">
+                <div className="bg-zinc-50 dark:bg-zinc-800/50 rounded-lg border border-zinc-200 dark:border-zinc-700 p-6 hover:shadow-lg hover:border-zinc-300 dark:hover:border-zinc-600 transition-all cursor-pointer relative overflow-hidden">
+                  <div className="absolute top-3 right-3">
+                    <span className="px-2 py-1 text-[10px] uppercase font-bold tracking-wider text-zinc-500 bg-zinc-200 dark:bg-zinc-700 rounded-md">
+                      Archived
+                    </span>
+                  </div>
+
+                  <div className="flex items-start justify-between mb-4 mt-2">
                     <div>
-                      <h3 className="text-lg font-semibold text-zinc-900 dark:text-white">
+                      <h3 className="text-lg font-semibold text-zinc-900 dark:text-white line-through decoration-zinc-400">
                         {employee.emp_code || "N/A"}
                       </h3>
                       <p className="text-sm text-zinc-600 dark:text-zinc-400">
                         Employee ID: {employee.user_id}
                       </p>
                     </div>
-                    <div className="w-12 h-12 bg-gradient-to-br from-blue-500 to-purple-600 rounded-full flex items-center justify-center">
-                      <span className="text-white font-bold text-sm">
+                    <div className="w-12 h-12 bg-zinc-300 dark:bg-zinc-700 rounded-full flex items-center justify-center grayscale">
+                      <span className="text-zinc-600 dark:text-zinc-300 font-bold text-sm">
                         {(employee.emp_code ?? "??").slice(0, 2)}
                       </span>
                     </div>
@@ -196,7 +182,7 @@ export default function EmployeesPage() {
                         <span className="text-sm text-zinc-600 dark:text-zinc-400">
                           This Month
                         </span>
-                        <span className={`px-2 py-1 rounded-full text-xs font-medium ${status?.color}`}>
+                        <span className={`px-2 py-1 rounded-full text-xs font-medium ${status?.color} grayscale opacity-80`}>
                           {status?.label}
                         </span>
                       </div>
@@ -222,7 +208,7 @@ export default function EmployeesPage() {
 
                       <div className="w-full bg-zinc-200 dark:bg-zinc-700 rounded-full h-2">
                         <div
-                          className="bg-blue-600 h-2 rounded-full transition-all duration-300"
+                          className="bg-zinc-500 h-2 rounded-full transition-all duration-300"
                           style={{ width: `${Math.min(stats.attendance_rate, 100)}%` }}
                         ></div>
                       </div>
@@ -242,27 +228,18 @@ export default function EmployeesPage() {
 
         {filteredEmployees.length === 0 && (
           <div className="text-center py-12">
-            <div className="w-16 h-16 bg-zinc-100 dark:bg-zinc-800 rounded-full flex items-center justify-center mx-auto mb-4">
-              <span className="text-2xl">👥</span>
+            <div className="w-16 h-16 bg-zinc-100 dark:bg-zinc-800 rounded-full flex items-center justify-center mx-auto mb-4 grayscale">
+              <span className="text-2xl">📦</span>
             </div>
             <h3 className="text-lg font-semibold text-zinc-900 dark:text-white mb-2">
-              No employees found
+              No archived employees
             </h3>
             <p className="text-zinc-600 dark:text-zinc-400">
-              {searchTerm ? "Try adjusting your search terms" : "No employees available"}
+              {searchTerm ? "No results found for your search" : "Archived records will appear here"}
             </p>
           </div>
         )}
       </div>
-
-      {/* Add Employee Modal */}
-      <AddEmployeeModal
-        isOpen={showAddModal}
-        onClose={() => setShowAddModal(false)}
-        onSuccess={() => {
-          fetchEmployeeStats(); // Refresh the employee list
-        }}
-      />
     </AppLayout>
   );
 }

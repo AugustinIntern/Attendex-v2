@@ -1,13 +1,14 @@
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import { supabase } from "@/lib/supabase";
 
-export async function GET() {
+export async function GET(request: NextRequest) {
   try {
-    // Fetch one record to see what columns exist
+    const table = request.nextUrl.searchParams.get("table") || "allowedpeople";
+    // Fetch 5 records to see what columns exist across them
     const { data, error } = await supabase
-      .from("allowedpeople")
+      .from(table)
       .select("*")
-      .limit(1);
+      .limit(5);
 
     if (error) {
       return NextResponse.json({
@@ -17,10 +18,11 @@ export async function GET() {
     }
 
     if (data && data.length > 0) {
-      const columns = Object.keys(data[0]);
+      const columns = new Set<string>();
+      data.forEach(d => Object.keys(d).forEach(k => columns.add(k)));
       return NextResponse.json({
-        columns: columns,
-        sampleRecord: data[0]
+        columns: Array.from(columns),
+        sampleRecord: data
       });
     }
 

@@ -1,27 +1,42 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 
-interface AddEmployeeModalProps {
-  isOpen: boolean;
-  onClose: () => void;
-  onSuccess: () => void;
+interface Employee {
+  user_id: number;
+  emp_code: string;
 }
 
-export default function AddEmployeeModal({ isOpen, onClose, onSuccess }: AddEmployeeModalProps) {
+interface EditEmployeeModalProps {
+  isOpen: boolean;
+  onClose: () => void;
+  onSuccess: (newUserId: number) => void;
+  employee: Employee | null;
+}
+
+export default function EditEmployeeModal({ isOpen, onClose, onSuccess, employee }: EditEmployeeModalProps) {
   const [empCode, setEmpCode] = useState("");
   const [userId, setUserId] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
 
+  useEffect(() => {
+    if (employee) {
+      setEmpCode(employee.emp_code || "");
+      setUserId(employee.user_id?.toString() || "");
+    }
+  }, [employee]);
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (!employee) return;
+    
     setError("");
     setLoading(true);
 
     try {
-      const response = await fetch("/api/employees", {
-        method: "POST",
+      const response = await fetch(`/api/employees/${employee.user_id}`, {
+        method: "PATCH",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           emp_code: empCode.toUpperCase(),
@@ -32,14 +47,12 @@ export default function AddEmployeeModal({ isOpen, onClose, onSuccess }: AddEmpl
       const data = await response.json();
 
       if (!response.ok) {
-        throw new Error(data.error || "Failed to add employee");
+        throw new Error(data.error || "Failed to update employee");
       }
 
       // Success
-      onSuccess();
+      onSuccess(parseInt(userId));
       onClose();
-      setEmpCode("");
-      setUserId("");
     } catch (err) {
       setError(err instanceof Error ? err.message : "An error occurred");
     } finally {
@@ -47,15 +60,14 @@ export default function AddEmployeeModal({ isOpen, onClose, onSuccess }: AddEmpl
     }
   };
 
-  if (!isOpen) return null;
+  if (!isOpen || !employee) return null;
 
   return (
     <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
       <div className="bg-white dark:bg-zinc-800 rounded-lg shadow-xl max-w-md w-full border border-zinc-200 dark:border-zinc-700">
-        {/* Header */}
         <div className="flex items-center justify-between p-6 border-b border-zinc-200 dark:border-zinc-700">
           <h2 className="text-xl font-semibold text-zinc-900 dark:text-white">
-            Add New Employee
+            Edit Employee
           </h2>
           <button
             onClick={onClose}
@@ -67,15 +79,13 @@ export default function AddEmployeeModal({ isOpen, onClose, onSuccess }: AddEmpl
           </button>
         </div>
 
-        {/* Form */}
         <form onSubmit={handleSubmit} className="p-6 space-y-4">
-          {/* Employee Code */}
           <div>
-            <label htmlFor="empCode" className="block text-sm font-medium text-zinc-900 dark:text-white mb-2">
+            <label htmlFor="editEmpCode" className="block text-sm font-medium text-zinc-900 dark:text-white mb-2">
               Employee Code
             </label>
             <input
-              id="empCode"
+              id="editEmpCode"
               type="text"
               value={empCode}
               onChange={(e) => setEmpCode(e.target.value.toUpperCase())}
@@ -90,13 +100,12 @@ export default function AddEmployeeModal({ isOpen, onClose, onSuccess }: AddEmpl
             </p>
           </div>
 
-          {/* Device User ID */}
           <div>
-            <label htmlFor="userId" className="block text-sm font-medium text-zinc-900 dark:text-white mb-2">
+            <label htmlFor="editUserId" className="block text-sm font-medium text-zinc-900 dark:text-white mb-2">
               Device User ID
             </label>
             <input
-              id="userId"
+              id="editUserId"
               type="number"
               value={userId}
               onChange={(e) => setUserId(e.target.value)}
@@ -110,14 +119,12 @@ export default function AddEmployeeModal({ isOpen, onClose, onSuccess }: AddEmpl
             </p>
           </div>
 
-          {/* Error Message */}
           {error && (
             <div className="p-3 rounded-lg bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800">
               <p className="text-sm text-red-600 dark:text-red-400">{error}</p>
             </div>
           )}
 
-          {/* Buttons */}
           <div className="flex gap-3 pt-4">
             <button
               type="button"
@@ -131,7 +138,7 @@ export default function AddEmployeeModal({ isOpen, onClose, onSuccess }: AddEmpl
               disabled={loading}
               className="flex-1 px-4 py-2 bg-gradient-to-r from-blue-600 to-cyan-600 hover:from-blue-700 hover:to-cyan-700 text-white font-semibold rounded-lg transition-all disabled:opacity-50 disabled:cursor-not-allowed"
             >
-              {loading ? "Adding..." : "Add Employee"}
+              {loading ? "Saving..." : "Save Changes"}
             </button>
           </div>
         </form>
