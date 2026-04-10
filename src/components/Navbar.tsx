@@ -18,7 +18,7 @@ export default function Navbar({ onMenuToggle }: NavbarProps) {
           <div className="flex items-center gap-4">
             <button
               onClick={onMenuToggle}
-              className="lg:hidden p-2 rounded-lg hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors"
+              className="p-2 rounded-lg hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors"
               aria-label="Toggle menu"
             >
               <svg

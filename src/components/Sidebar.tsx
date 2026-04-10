@@ -33,7 +33,7 @@ export default function Sidebar({ isOpen = true, onClose }: SidebarProps) {
 
       {/* Sidebar */}
       <aside
-        className={`fixed left-0 top-16 bottom-0 w-64 bg-white dark:bg-zinc-900 border-r border-zinc-200 dark:border-zinc-800 overflow-y-auto transition-transform duration-300 lg:translate-x-0 z-40 ${
+        className={`fixed left-0 top-16 bottom-0 w-64 bg-white dark:bg-zinc-900 border-r border-zinc-200 dark:border-zinc-800 overflow-y-auto transition-transform duration-300 z-40 ${
           isOpen ? "translate-x-0" : "-translate-x-full"
         }`}
       >
@@ -70,9 +70,6 @@ export default function Sidebar({ isOpen = true, onClose }: SidebarProps) {
           </div>
         </div>
       </aside>
-
-      {/* Content spacer (shows on large screens) */}
-      <div className="hidden lg:block w-64 flex-shrink-0" />
     </>
   );
 }
