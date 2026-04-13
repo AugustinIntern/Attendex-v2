@@ -2,7 +2,8 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { LayoutDashboard, Users, Archive, CalendarDays, BarChart3, Settings, HelpCircle } from "lucide-react";
+import { LayoutDashboard, Users, Archive, CalendarDays, BarChart3, Settings } from "lucide-react";
+
 import { Badge } from "@/components/ui/badge";
 
 interface SidebarProps {
@@ -76,21 +77,6 @@ export default function Sidebar({ isOpen = true, onClose }: SidebarProps) {
           })}
         </div>
 
-        {/* Bottom section */}
-        <div className="absolute bottom-0 left-0 right-0 p-4 border-t border-muted bg-background">
-          <div className="bg-muted/30 rounded-2xl p-5 border border-muted text-center">
-            <div className="w-10 h-10 bg-primary/10 rounded-xl flex items-center justify-center mx-auto mb-3">
-              <HelpCircle className="w-5 h-5 text-primary" />
-            </div>
-            <p className="text-[10px] font-black text-muted-foreground uppercase tracking-widest mb-1">
-              Support
-            </p>
-            <p className="text-xs font-bold text-foreground mb-3">Need assistance?</p>
-            <button className="w-full py-2.5 bg-primary hover:bg-primary/90 text-primary-foreground text-[10px] font-black uppercase tracking-widest rounded-xl transition-all shadow-md shadow-primary/20">
-              Contact Support
-            </button>
-          </div>
-        </div>
       </aside>
     </>
   );

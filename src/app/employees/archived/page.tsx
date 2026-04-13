@@ -4,11 +4,11 @@ import { useState, useEffect, useMemo } from "react";
 import Link from "next/link";
 import { supabase } from "@/lib/supabase";
 import AppLayout from "@/components/AppLayout";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Input } from "@/components/ui/input";
-import { Search, Archive, AlertCircle, TrendingUp, History } from "lucide-react";
+import { Search, Archive, AlertCircle, History, TrendingUp } from "lucide-react";
 
 interface Employee {
   user_id: number;
@@ -102,150 +102,177 @@ export default function ArchivedEmployeesPage() {
     });
   }, [employees, searchTerm]);
 
-  const getAttendanceStatus = (rate: number) => {
-    if (rate >= 90) return { label: "EXCELLENT", variant: "default" as const, color: "bg-emerald-600/30 text-emerald-600 border-emerald-500/20" };
-    if (rate >= 75) return { label: "OPTIMAL", variant: "secondary" as const, color: "bg-blue-500/30 text-blue-600 border-blue-500/20" };
-    if (rate >= 60) return { label: "WARNING", variant: "outline" as const, color: "text-amber-500 border-amber-500/20 bg-amber-500/10" };
-    return { label: "CRITICAL", variant: "destructive" as const, color: "bg-destructive/30 text-destructive border-destructive/20" };
+  const getStatusConfig = (rate: number) => {
+    if (rate >= 90) return { label: "EXCELLENT", cls: "bg-emerald-500/20 text-emerald-400 border-emerald-500/30" };
+    if (rate >= 75) return { label: "OPTIMAL",   cls: "bg-blue-500/20 text-blue-400 border-blue-500/30" };
+    if (rate >= 60) return { label: "WARNING",   cls: "bg-amber-500/20 text-amber-400 border-amber-500/30" };
+    return            { label: "CRITICAL",   cls: "bg-red-500/20 text-red-400 border-red-500/30" };
   };
 
   return (
     <AppLayout>
       <div className="space-y-10">
+
+        {/* Header */}
         <div className="flex flex-col md:flex-row md:items-end justify-between gap-6">
           <div>
-            <h1 className="text-4xl font-extrabold text-foreground tracking-tight flex items-center gap-4">
-              <Archive className="w-10 h-10 text-muted-foreground opacity-50" />
+            <h1 className="text-5xl font-extrabold text-foreground tracking-tighter flex items-center gap-4">
+              <Archive className="w-10 h-10 text-muted-foreground/40" />
               Cold Storage
             </h1>
             <p className="text-muted-foreground mt-2 font-medium">
-              Access deactivated personnel records and historical logs.
+              Deactivated personnel records and historical telemetry.
             </p>
           </div>
-          
-          <div className="flex items-center gap-4">
-             <Card className="bg-muted/10 border-muted shadow-none px-6 py-2 flex items-center gap-4 rounded-2xl">
-                <History className="w-5 h-5 text-muted-foreground" />
-                <div>
-                   <p className="text-2xl font-black text-muted-foreground leading-none">{employees.length}</p>
-                   <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest mt-1">Archived</p>
-                </div>
-             </Card>
+
+          <div className="flex items-center gap-3 px-6 py-4 rounded-2xl bg-muted/20 border border-muted">
+            <History className="w-5 h-5 text-muted-foreground" />
+            <div>
+              <p className="text-2xl font-black leading-none">{employees.length}</p>
+              <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest mt-0.5">Archived</p>
+            </div>
           </div>
         </div>
 
-        <div className="relative group max-w-2xl">
-           <Search className="absolute left-5 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground group-focus-within:text-muted-foreground transition-colors" />
-           <Input
+        {/* Search */}
+        <div className="relative max-w-2xl">
+          <Search className="absolute left-5 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
+          <Input
             type="text"
-            placeholder="Archive retrieval..."
+            placeholder="Search archived records..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
-            className="h-16 pl-14 pr-6 rounded-[1.25rem] bg-muted/20 border-muted focus:bg-background text-lg font-bold transition-all grayscale placeholder:opacity-50"
+            className="h-14 pl-14 pr-6 rounded-2xl bg-muted/20 border-muted focus-visible:ring-primary text-base font-bold placeholder:text-muted-foreground/50"
           />
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+        {/* Card Grid */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {loading ? (
             Array(6).fill(0).map((_, i) => (
-              <Card key={i} className="rounded-[2.5rem] overflow-hidden opacity-50">
-                <CardHeader className="p-8 pb-0">
-                  <div className="flex justify-between">
-                    <div className="space-y-2 flex-1">
-                      <Skeleton className="h-6 w-3/4" />
-                      <Skeleton className="h-4 w-1/2" />
-                    </div>
-                    <Skeleton className="w-14 h-14 rounded-2xl" />
+              <Card key={i} className="rounded-3xl border-muted bg-muted/10 p-6 space-y-4">
+                <div className="flex items-center gap-4">
+                  <Skeleton className="w-14 h-14 rounded-2xl flex-shrink-0" />
+                  <div className="space-y-2 flex-1 min-w-0">
+                    <Skeleton className="h-5 w-3/4" />
+                    <Skeleton className="h-3 w-1/2" />
                   </div>
-                </CardHeader>
-                <CardContent className="p-8">
-                   <Skeleton className="h-20 w-full rounded-2xl" />
-                </CardContent>
+                </div>
+                <Skeleton className="h-16 w-full rounded-2xl" />
               </Card>
             ))
           ) : filteredEmployees.map((employee) => {
             const stats = employeeStats.find(s => s.user_id === employee.user_id);
-            const status = stats ? getAttendanceStatus(stats.attendance_rate) : null;
+            const statusCfg = stats ? getStatusConfig(stats.attendance_rate) : null;
+            const displayName = employee.name || employee.emp_code || "Unknown";
+            const initials = displayName.slice(0, 2).toUpperCase();
 
             return (
               <Link
                 key={employee.user_id}
                 href={`/employees/${employee.user_id}`}
-                className="group block grayscale hover:grayscale-0 transition-all duration-700"
+                className="group block"
               >
-                <Card className="rounded-[2.5rem] border-muted bg-muted/5 group-hover:bg-background group-hover:border-primary/30 transition-all duration-500 overflow-hidden relative">
-                   <div className="absolute top-8 right-8">
-                      <Badge variant="outline" className="bg-muted/50 text-[9px] font-black uppercase tracking-widest border-muted-foreground/20 text-muted-foreground">DEACTIVATED</Badge>
-                   </div>
-                   <CardHeader className="p-8 pb-4">
-                      <div className="flex items-start justify-between">
-                        <div className="max-w-[70%]">
-                           <p className="text-[10px] font-black text-muted-foreground uppercase tracking-[0.2em] mb-1">ID: {employee.user_id}</p>
-                           <CardTitle className="text-xl font-black truncate leading-tight opacity-60 group-hover:opacity-100 transition-opacity">
-                              {employee.name || employee.emp_code}
-                           </CardTitle>
-                        </div>
-                        <div className="w-14 h-14 bg-muted border border-muted-foreground/10 rounded-2xl flex items-center justify-center group-hover:bg-primary/20 group-hover:scale-110 group-hover:border-primary/20 transition-all duration-500">
-                          <span className="text-muted-foreground font-black text-sm group-hover:text-primary">
-                            {(employee.name || employee.emp_code || "??").slice(0, 2).toUpperCase()}
+                <Card className="rounded-3xl border-muted bg-muted/10 hover:bg-muted/20 hover:border-muted-foreground/20 transition-all duration-300 overflow-hidden">
+                  <CardContent className="p-6 space-y-5">
+
+                    {/* Identity row */}
+                    <div className="flex items-center gap-4">
+                      {/* Avatar */}
+                      <div className="w-14 h-14 flex-shrink-0 rounded-2xl bg-muted border border-muted-foreground/10 flex items-center justify-center group-hover:border-muted-foreground/30 transition-colors">
+                        <span className="text-muted-foreground font-black text-sm">{initials}</span>
+                      </div>
+
+                      {/* Name + meta */}
+                      <div className="flex-1 min-w-0">
+                        <p className="font-black text-base text-foreground/70 group-hover:text-foreground truncate transition-colors">
+                          {displayName}
+                        </p>
+                        <div className="flex items-center gap-2 mt-1">
+                          <span className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest">
+                            ID #{employee.user_id}
+                          </span>
+                          <span className="text-muted-foreground/30">·</span>
+                          <span className="text-[10px] font-bold font-mono text-muted-foreground">
+                            {employee.emp_code}
                           </span>
                         </div>
                       </div>
-                   </CardHeader>
 
-                   <CardContent className="p-8 pt-0">
-                     {stats ? (
-                       <div className="space-y-6">
-                         <div className="flex justify-between items-center bg-muted/20 p-3 rounded-xl border border-muted/30">
-                            <span className="text-[10px] font-black text-muted-foreground uppercase tracking-widest pl-2">Legacy Sync</span>
-                            <Badge className={`rounded-lg font-black text-[10px] tracking-widest border shadow-none ${status?.color}`}>
-                               {status?.label}
-                            </Badge>
-                         </div>
+                      {/* Deactivated badge */}
+                      <Badge
+                        variant="outline"
+                        className="flex-shrink-0 text-[9px] font-black uppercase tracking-widest border-muted-foreground/20 text-muted-foreground/60 bg-muted/30 rounded-lg px-2 py-1"
+                      >
+                        OFF
+                      </Badge>
+                    </div>
 
-                         <div className="grid grid-cols-2 gap-4">
-                            <div className="bg-muted/30 p-4 rounded-2xl text-center">
-                               <p className="text-2xl font-black text-muted-foreground group-hover:text-foreground transition-colors">{stats.present_days}</p>
-                               <p className="text-[9px] font-bold text-muted-foreground uppercase tracking-widest mt-1">Logs</p>
-                            </div>
-                            <div className="bg-muted/30 p-4 rounded-2xl text-center">
-                               <p className="text-2xl font-black text-muted-foreground group-hover:text-foreground transition-colors">{Math.round(stats.attendance_rate)}%</p>
-                               <p className="text-[9px] font-bold text-muted-foreground uppercase tracking-widest mt-1">Rate</p>
-                            </div>
-                         </div>
+                    {/* Stats */}
+                    {stats ? (
+                      <div className="space-y-3">
+                        {/* Status + rate in one row */}
+                        <div className="flex items-center justify-between bg-muted/30 rounded-xl px-4 py-2.5 border border-muted/50">
+                          <span className="text-[10px] font-black text-muted-foreground uppercase tracking-widest">
+                            Last Active
+                          </span>
+                          <Badge className={`text-[9px] font-black uppercase tracking-widest border rounded-lg px-3 py-1 shadow-none ${statusCfg?.cls}`}>
+                            {statusCfg?.label}
+                          </Badge>
+                        </div>
 
-                         <div className="relative pt-2">
-                            <div className="w-full bg-muted/30 rounded-full h-1.5 overflow-hidden">
-                               <div
-                                 className="bg-muted-foreground/30 group-hover:bg-primary h-full transition-all duration-1000 ease-out"
-                                 style={{ width: `${Math.min(stats.attendance_rate, 100)}%` }}
-                               />
-                            </div>
-                         </div>
-                       </div>
-                     ) : (
-                       <div className="p-8 text-center bg-muted/20 rounded-[1.5rem] border border-dashed border-zinc-500/20">
-                          <AlertCircle className="w-6 h-6 text-muted-foreground/20 mx-auto mb-2" />
-                          <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest">Incomplete Record</p>
-                       </div>
-                     )}
-                   </CardContent>
+                        {/* Metrics */}
+                        <div className="grid grid-cols-2 gap-3">
+                          <div className="bg-muted/20 rounded-xl p-3 text-center border border-muted/30">
+                            <p className="text-xl font-black text-foreground/60 group-hover:text-foreground transition-colors">
+                              {stats.present_days}
+                            </p>
+                            <p className="text-[9px] font-bold text-muted-foreground uppercase tracking-widest mt-0.5">
+                              Days Logged
+                            </p>
+                          </div>
+                          <div className="bg-muted/20 rounded-xl p-3 text-center border border-muted/30">
+                            <p className="text-xl font-black text-foreground/60 group-hover:text-foreground transition-colors">
+                              {Math.round(stats.attendance_rate)}%
+                            </p>
+                            <p className="text-[9px] font-bold text-muted-foreground uppercase tracking-widest mt-0.5">
+                              Sync Rate
+                            </p>
+                          </div>
+                        </div>
+
+                        {/* Progress bar */}
+                        <div className="w-full bg-muted/30 rounded-full h-1 overflow-hidden">
+                          <div
+                            className="bg-muted-foreground/30 group-hover:bg-primary h-full transition-all duration-700 ease-out"
+                            style={{ width: `${Math.min(stats.attendance_rate, 100)}%` }}
+                          />
+                        </div>
+                      </div>
+                    ) : (
+                      <div className="flex items-center gap-3 p-3 bg-muted/20 rounded-xl border border-dashed border-muted-foreground/10">
+                        <AlertCircle className="w-4 h-4 text-muted-foreground/30 flex-shrink-0" />
+                        <p className="text-[10px] font-bold text-muted-foreground/50 uppercase tracking-widest">
+                          No telemetry records
+                        </p>
+                      </div>
+                    )}
+                  </CardContent>
                 </Card>
               </Link>
             );
           })}
         </div>
 
+        {/* Empty state */}
         {filteredEmployees.length === 0 && !loading && (
-          <div className="text-center py-20 bg-muted/5 rounded-[3rem] border-2 border-dashed border-muted grayscale opacity-50">
-            <div className="w-20 h-20 bg-muted rounded-full flex items-center justify-center mx-auto mb-6">
-               <Archive className="w-10 h-10 opacity-20" />
+          <div className="text-center py-24 rounded-3xl border-2 border-dashed border-muted">
+            <div className="w-20 h-20 bg-muted/30 rounded-full flex items-center justify-center mx-auto mb-6">
+              <Archive className="w-10 h-10 text-muted-foreground/20" />
             </div>
-            <h3 className="text-2xl font-black tracking-tight mb-2">
-              End of Line
-            </h3>
+            <h3 className="text-2xl font-black tracking-tight mb-2">End of Line</h3>
             <p className="text-muted-foreground font-medium">
-              No historical data clusters matching the current query.
+              No archived records match the current query.
             </p>
           </div>
         )}
