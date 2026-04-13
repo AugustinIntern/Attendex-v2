@@ -1,6 +1,10 @@
 "use client";
 
 import { useState } from "react";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { AlertTriangle, Archive, Loader2, ShieldAlert } from "lucide-react";
 
 interface Employee {
   user_id: number;
@@ -24,77 +28,112 @@ export default function ArchiveEmployeeModal({
 }: ArchiveEmployeeModalProps) {
   const [confirmText, setConfirmText] = useState("");
 
-  if (!isOpen || !employee) return null;
-
   const handleConfirm = (e: React.FormEvent) => {
     e.preventDefault();
-    if (confirmText === employee.emp_code) {
+    if (confirmText === employee?.emp_code) {
       onConfirm();
     }
   };
 
-  const isMatch = confirmText === employee.emp_code;
+  const isMatch = employee ? confirmText === employee.emp_code : false;
+
+  const handleClose = () => {
+    if (!isArchiving) {
+      onClose();
+      setConfirmText("");
+    }
+  };
 
   return (
-    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-      <div className="bg-white dark:bg-zinc-800 rounded-lg shadow-xl max-w-md w-full border border-zinc-200 dark:border-zinc-700">
-        <div className="flex items-center justify-between p-6 border-b border-zinc-200 dark:border-zinc-700">
-          <h2 className="text-xl font-semibold text-amber-600 dark:text-amber-400">
-            Confirm Archival
-          </h2>
-          <button
-            onClick={onClose}
-            disabled={isArchiving}
-            className="p-2 rounded-lg hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors disabled:opacity-50"
-          >
-            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-            </svg>
-          </button>
-        </div>
+    <Dialog open={isOpen && !!employee} onOpenChange={handleClose}>
+      <DialogContent className="max-w-md rounded-[2.5rem] border-destructive/20 p-0 overflow-hidden gap-0">
+        <DialogHeader className="p-8 border-b border-destructive/20 bg-destructive/5">
+          <div className="flex items-center gap-4">
+            <div className="w-14 h-14 bg-destructive/10 rounded-2xl flex items-center justify-center border border-destructive/20">
+              <ShieldAlert className="w-7 h-7 text-destructive" />
+            </div>
+            <div>
+              <DialogTitle className="text-2xl font-black tracking-tight text-destructive">
+                Deactivate Record
+              </DialogTitle>
+              <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-[0.2em] mt-1">
+                Irreversible action — confirm carefully
+              </p>
+            </div>
+          </div>
+        </DialogHeader>
 
-        <form onSubmit={handleConfirm} className="p-6 space-y-4">
-          <p className="text-zinc-600 dark:text-zinc-300 text-sm">
-            Archiving will remove this employee from the active list but keep all their
-            attendance records. You can restore them later from the Archive section.
-            Please confirm for <span className="font-bold text-zinc-900 dark:text-white">{employee.emp_code}</span>.
-          </p>
+        <form onSubmit={handleConfirm} className="p-8 space-y-6">
+          <div className="bg-destructive/5 rounded-2xl p-5 border border-destructive/20 space-y-2">
+            <div className="flex items-center gap-2 text-destructive">
+              <AlertTriangle className="w-4 h-4" />
+              <p className="text-xs font-black uppercase tracking-widest">Warning</p>
+            </div>
+            <p className="text-sm font-medium text-muted-foreground leading-relaxed">
+              Archiving will remove{" "}
+              <span className="font-black text-foreground font-mono bg-muted px-2 py-0.5 rounded-lg">
+                {employee?.emp_code}
+              </span>{" "}
+              from the active workforce. All telemetry records are preserved and can be restored from Cold Storage.
+            </p>
+          </div>
 
-          <div>
-            <label htmlFor="confirmText" className="block text-sm font-medium text-zinc-900 dark:text-white mb-2">
-              Please type <span className="font-bold font-mono bg-zinc-100 dark:bg-zinc-700 px-1 py-0.5 rounded">{employee.emp_code}</span> to confirm.
+          <div className="space-y-2">
+            <label htmlFor="confirmText" className="text-xs font-black text-muted-foreground uppercase tracking-[0.2em] flex items-center gap-2">
+              <Archive className="w-4 h-4 text-destructive" />
+              Type{" "}
+              <code className="font-mono bg-muted/70 px-2 py-0.5 rounded-lg text-foreground">
+                {employee?.emp_code}
+              </code>{" "}
+              to confirm
             </label>
-            <input
+            <Input
               id="confirmText"
               type="text"
               value={confirmText}
               onChange={(e) => setConfirmText(e.target.value)}
-              placeholder={employee.emp_code}
-              className="w-full px-4 py-2 rounded-lg border border-zinc-300 dark:border-zinc-600 bg-white dark:bg-zinc-700 text-zinc-900 dark:text-white placeholder-zinc-500 dark:placeholder-zinc-400 focus:outline-none focus:ring-2 focus:ring-amber-500"
+              placeholder={employee?.emp_code}
+              className={`h-14 rounded-xl bg-muted/20 font-bold px-5 text-base font-mono transition-colors ${
+                isMatch
+                  ? "border-destructive focus-visible:ring-destructive"
+                  : "border-muted"
+              }`}
               required
               disabled={isArchiving}
             />
           </div>
 
-          <div className="flex gap-3 pt-4">
-            <button
+          <div className="flex gap-3 pt-2">
+            <Button
               type="button"
-              onClick={onClose}
+              variant="outline"
+              onClick={handleClose}
               disabled={isArchiving}
-              className="flex-1 px-4 py-2 border border-zinc-300 dark:border-zinc-600 text-zinc-700 dark:text-zinc-300 rounded-lg hover:bg-zinc-50 dark:hover:bg-zinc-800 transition-colors disabled:opacity-50"
+              className="flex-1 h-14 rounded-xl border-muted font-black text-xs uppercase tracking-widest hover:bg-muted/40"
             >
               Cancel
-            </button>
-            <button
+            </Button>
+            <Button
               type="submit"
               disabled={!isMatch || isArchiving}
-              className="flex-1 px-4 py-2 bg-amber-600 hover:bg-amber-700 text-white font-semibold rounded-lg transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+              variant="destructive"
+              className="flex-1 h-14 rounded-xl font-black text-xs uppercase tracking-widest shadow-lg shadow-destructive/20 disabled:opacity-30"
             >
-              {isArchiving ? "Archiving..." : "Archive Employee"}
-            </button>
+              {isArchiving ? (
+                <>
+                  <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                  Deactivating...
+                </>
+              ) : (
+                <>
+                  <Archive className="w-4 h-4 mr-2" />
+                  Deactivate
+                </>
+              )}
+            </Button>
           </div>
         </form>
-      </div>
-    </div>
+      </DialogContent>
+    </Dialog>
   );
 }

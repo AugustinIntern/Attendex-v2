@@ -1,6 +1,11 @@
 "use client";
 
 import { useState } from "react";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import { UserPlus, AlertCircle, Fingerprint, Hash, Loader2 } from "lucide-react";
 
 interface AddEmployeeModalProps {
   isOpen: boolean;
@@ -35,7 +40,6 @@ export default function AddEmployeeModal({ isOpen, onClose, onSuccess }: AddEmpl
         throw new Error(data.error || "Failed to add employee");
       }
 
-      // Success
       onSuccess();
       onClose();
       setEmpCode("");
@@ -47,95 +51,111 @@ export default function AddEmployeeModal({ isOpen, onClose, onSuccess }: AddEmpl
     }
   };
 
-  if (!isOpen) return null;
+  const handleClose = () => {
+    if (!loading) {
+      onClose();
+      setError("");
+    }
+  };
 
   return (
-    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-      <div className="bg-white dark:bg-zinc-800 rounded-lg shadow-xl max-w-md w-full border border-zinc-200 dark:border-zinc-700">
-        {/* Header */}
-        <div className="flex items-center justify-between p-6 border-b border-zinc-200 dark:border-zinc-700">
-          <h2 className="text-xl font-semibold text-zinc-900 dark:text-white">
-            Add New Employee
-          </h2>
-          <button
-            onClick={onClose}
-            className="p-2 rounded-lg hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors"
-          >
-            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-            </svg>
-          </button>
-        </div>
+    <Dialog open={isOpen} onOpenChange={handleClose}>
+      <DialogContent className="max-w-md rounded-[2.5rem] border-muted p-0 overflow-hidden gap-0">
+        <DialogHeader className="p-8 border-b border-muted bg-muted/20">
+          <div className="flex items-center gap-4">
+            <div className="w-14 h-14 bg-primary rounded-2xl flex items-center justify-center shadow-lg shadow-primary/20">
+              <UserPlus className="w-7 h-7 text-primary-foreground" />
+            </div>
+            <div>
+              <DialogTitle className="text-2xl font-black tracking-tight">
+                Register Personnel
+              </DialogTitle>
+              <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-[0.2em] mt-1">
+                New system enrollment
+              </p>
+            </div>
+          </div>
+        </DialogHeader>
 
-        {/* Form */}
-        <form onSubmit={handleSubmit} className="p-6 space-y-4">
-          {/* Employee Code */}
-          <div>
-            <label htmlFor="empCode" className="block text-sm font-medium text-zinc-900 dark:text-white mb-2">
+        <form onSubmit={handleSubmit} className="p-8 space-y-6">
+          <div className="space-y-2">
+            <label htmlFor="empCode" className="flex items-center gap-2 text-xs font-black text-muted-foreground uppercase tracking-[0.2em]">
+              <Fingerprint className="w-4 h-4 text-primary" />
               Employee Code
             </label>
-            <input
+            <Input
               id="empCode"
               type="text"
               value={empCode}
               onChange={(e) => setEmpCode(e.target.value.toUpperCase())}
               placeholder="e.g., MBX8, BLK2"
-              className="w-full px-4 py-2 rounded-lg border border-zinc-300 dark:border-zinc-600 bg-white dark:bg-zinc-700 text-zinc-900 dark:text-white placeholder-zinc-500 dark:placeholder-zinc-400 focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="h-14 rounded-xl border-muted bg-muted/20 font-bold px-5 focus:border-primary text-base"
               required
               pattern="^[A-Z]{3}\d$"
               title="Employee code must be in format: XXX# (e.g., MBX8, BLK2)"
             />
-            <p className="text-xs text-zinc-600 dark:text-zinc-400 mt-1">
-              Format: XXX# (3 letters + 1 number, e.g., MBX8)
+            <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider">
+              Format: 3 letters + 1 digit (e.g., MBX8)
             </p>
           </div>
 
-          {/* Device User ID */}
-          <div>
-            <label htmlFor="userId" className="block text-sm font-medium text-zinc-900 dark:text-white mb-2">
+          <div className="space-y-2">
+            <label htmlFor="userId" className="flex items-center gap-2 text-xs font-black text-muted-foreground uppercase tracking-[0.2em]">
+              <Hash className="w-4 h-4 text-primary" />
               Device User ID
             </label>
-            <input
+            <Input
               id="userId"
               type="number"
               value={userId}
               onChange={(e) => setUserId(e.target.value)}
               placeholder="e.g., 5"
-              className="w-full px-4 py-2 rounded-lg border border-zinc-300 dark:border-zinc-600 bg-white dark:bg-zinc-700 text-zinc-900 dark:text-white placeholder-zinc-500 dark:placeholder-zinc-400 focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="h-14 rounded-xl border-muted bg-muted/20 font-bold px-5 focus:border-primary text-base"
               required
               min="1"
             />
-            <p className="text-xs text-zinc-600 dark:text-zinc-400 mt-1">
-              The ID corresponding to the employee on the biometrics device.
+            <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider">
+              Biometrics device enrollment ID
             </p>
           </div>
 
-          {/* Error Message */}
           {error && (
-            <div className="p-3 rounded-lg bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800">
-              <p className="text-sm text-red-600 dark:text-red-400">{error}</p>
-            </div>
+            <Alert variant="destructive" className="rounded-xl border-destructive/30 bg-destructive/10">
+              <AlertCircle className="h-4 w-4" />
+              <AlertDescription className="font-bold text-sm">{error}</AlertDescription>
+            </Alert>
           )}
 
-          {/* Buttons */}
-          <div className="flex gap-3 pt-4">
-            <button
+          <div className="flex gap-3 pt-2">
+            <Button
               type="button"
-              onClick={onClose}
-              className="flex-1 px-4 py-2 border border-zinc-300 dark:border-zinc-600 text-zinc-700 dark:text-zinc-300 rounded-lg hover:bg-zinc-50 dark:hover:bg-zinc-800 transition-colors"
+              variant="outline"
+              onClick={handleClose}
+              disabled={loading}
+              className="flex-1 h-14 rounded-xl border-muted font-black text-xs uppercase tracking-widest hover:bg-muted/40"
             >
               Cancel
-            </button>
-            <button
+            </Button>
+            <Button
               type="submit"
               disabled={loading}
-              className="flex-1 px-4 py-2 bg-gradient-to-r from-blue-600 to-cyan-600 hover:from-blue-700 hover:to-cyan-700 text-white font-semibold rounded-lg transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+              className="flex-1 h-14 rounded-xl font-black text-xs uppercase tracking-widest bg-primary hover:bg-primary/90 shadow-lg shadow-primary/20"
             >
-              {loading ? "Adding..." : "Add Employee"}
-            </button>
+              {loading ? (
+                <>
+                  <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                  Enrolling...
+                </>
+              ) : (
+                <>
+                  <UserPlus className="w-4 h-4 mr-2" />
+                  Enroll
+                </>
+              )}
+            </Button>
           </div>
         </form>
-      </div>
-    </div>
+      </DialogContent>
+    </Dialog>
   );
 }

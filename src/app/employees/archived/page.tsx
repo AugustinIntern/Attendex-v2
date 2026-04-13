@@ -4,6 +4,11 @@ import { useState, useEffect, useMemo } from "react";
 import Link from "next/link";
 import { supabase } from "@/lib/supabase";
 import AppLayout from "@/components/AppLayout";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { Skeleton } from "@/components/ui/skeleton";
+import { Input } from "@/components/ui/input";
+import { Search, Archive, AlertCircle, TrendingUp, History } from "lucide-react";
 
 interface Employee {
   user_id: number;
@@ -98,51 +103,67 @@ export default function ArchivedEmployeesPage() {
   }, [employees, searchTerm]);
 
   const getAttendanceStatus = (rate: number) => {
-    if (rate >= 90) return { label: "Excellent", color: "text-green-600 bg-green-50" };
-    if (rate >= 75) return { label: "Good", color: "text-blue-600 bg-blue-50" };
-    if (rate >= 60) return { label: "Fair", color: "text-yellow-600 bg-yellow-50" };
-    return { label: "Poor", color: "text-red-600 bg-red-50" };
+    if (rate >= 90) return { label: "EXCELLENT", variant: "default" as const, color: "bg-emerald-600/30 text-emerald-600 border-emerald-500/20" };
+    if (rate >= 75) return { label: "OPTIMAL", variant: "secondary" as const, color: "bg-blue-500/30 text-blue-600 border-blue-500/20" };
+    if (rate >= 60) return { label: "WARNING", variant: "outline" as const, color: "text-amber-500 border-amber-500/20 bg-amber-500/10" };
+    return { label: "CRITICAL", variant: "destructive" as const, color: "bg-destructive/30 text-destructive border-destructive/20" };
   };
 
   return (
     <AppLayout>
-      <div className="space-y-6">
-        <div className="flex items-center justify-between">
+      <div className="space-y-10">
+        <div className="flex flex-col md:flex-row md:items-end justify-between gap-6">
           <div>
-            <h1 className="text-3xl font-bold text-zinc-900 dark:text-white">
-              Archived Employees
+            <h1 className="text-4xl font-extrabold text-foreground tracking-tight flex items-center gap-4">
+              <Archive className="w-10 h-10 text-muted-foreground opacity-50" />
+              Cold Storage
             </h1>
-            <p className="text-zinc-600 dark:text-zinc-400 mt-1">
-              View historical records and statistics for archived employees
+            <p className="text-muted-foreground mt-2 font-medium">
+              Access deactivated personnel records and historical logs.
             </p>
           </div>
-          <div className="flex items-center gap-6">
-            <div className="text-center">
-              <p className="text-2xl font-bold text-zinc-900 dark:text-white">
-                {employees.length}
-              </p>
-              <p className="text-sm text-zinc-600 dark:text-zinc-400">
-                Archived Records
-              </p>
-            </div>
+          
+          <div className="flex items-center gap-4">
+             <Card className="bg-muted/10 border-muted shadow-none px-6 py-2 flex items-center gap-4 rounded-2xl">
+                <History className="w-5 h-5 text-muted-foreground" />
+                <div>
+                   <p className="text-2xl font-black text-muted-foreground leading-none">{employees.length}</p>
+                   <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest mt-1">Archived</p>
+                </div>
+             </Card>
           </div>
         </div>
 
-        <div className="flex items-center gap-4">
-          <div className="flex-1 max-w-md">
-            <input
-              type="text"
-              placeholder="Search archived employees by name or code..."
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              className="w-full px-4 py-2 rounded-lg border border-zinc-300 dark:border-zinc-600 bg-white dark:bg-zinc-700 text-zinc-900 dark:text-white placeholder-zinc-500 dark:placeholder-zinc-400 focus:outline-none focus:ring-2 focus:ring-blue-500"
-            />
-          </div>
+        <div className="relative group max-w-2xl">
+           <Search className="absolute left-5 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground group-focus-within:text-muted-foreground transition-colors" />
+           <Input
+            type="text"
+            placeholder="Archive retrieval..."
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+            className="h-16 pl-14 pr-6 rounded-[1.25rem] bg-muted/20 border-muted focus:bg-background text-lg font-bold transition-all grayscale placeholder:opacity-50"
+          />
         </div>
 
-        {/* Employee Cards Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {filteredEmployees.map((employee) => {
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+          {loading ? (
+            Array(6).fill(0).map((_, i) => (
+              <Card key={i} className="rounded-[2.5rem] overflow-hidden opacity-50">
+                <CardHeader className="p-8 pb-0">
+                  <div className="flex justify-between">
+                    <div className="space-y-2 flex-1">
+                      <Skeleton className="h-6 w-3/4" />
+                      <Skeleton className="h-4 w-1/2" />
+                    </div>
+                    <Skeleton className="w-14 h-14 rounded-2xl" />
+                  </div>
+                </CardHeader>
+                <CardContent className="p-8">
+                   <Skeleton className="h-20 w-full rounded-2xl" />
+                </CardContent>
+              </Card>
+            ))
+          ) : filteredEmployees.map((employee) => {
             const stats = employeeStats.find(s => s.user_id === employee.user_id);
             const status = stats ? getAttendanceStatus(stats.attendance_rate) : null;
 
@@ -150,96 +171,81 @@ export default function ArchivedEmployeesPage() {
               <Link
                 key={employee.user_id}
                 href={`/employees/${employee.user_id}`}
-                className="block opacity-80 hover:opacity-100 transition-opacity"
+                className="group block grayscale hover:grayscale-0 transition-all duration-700"
               >
-                <div className="bg-zinc-50 dark:bg-zinc-800/50 rounded-lg border border-zinc-200 dark:border-zinc-700 p-6 hover:shadow-lg hover:border-zinc-300 dark:hover:border-zinc-600 transition-all cursor-pointer relative overflow-hidden">
-                  <div className="absolute top-3 right-3">
-                    <span className="px-2 py-1 text-[10px] uppercase font-bold tracking-wider text-zinc-500 bg-zinc-200 dark:bg-zinc-700 rounded-md">
-                      Archived
-                    </span>
-                  </div>
-
-                  <div className="flex items-start justify-between mb-4 mt-2">
-                    <div>
-                      <h3 className="text-lg font-semibold text-zinc-900 dark:text-white line-through decoration-zinc-400 truncate" title={employee.name}>
-                        {employee.name || employee.emp_code || "N/A"}
-                      </h3>
-                      <p className="text-sm text-zinc-600 dark:text-zinc-400">
-                        Employee ID: {employee.user_id}
-                      </p>
-                    </div>
-                    <div className="w-12 h-12 bg-zinc-300 dark:bg-zinc-700 rounded-full flex items-center justify-center grayscale">
-                      <span className="text-zinc-600 dark:text-zinc-300 font-bold text-sm">
-                        {(employee.name || employee.emp_code || "??").slice(0, 2)}
-                      </span>
-                    </div>
-                  </div>
-
-                  {loading ? (
-                    <div className="space-y-2">
-                      <div className="h-4 bg-zinc-200 dark:bg-zinc-700 rounded animate-pulse"></div>
-                      <div className="h-4 bg-zinc-200 dark:bg-zinc-700 rounded animate-pulse w-3/4"></div>
-                    </div>
-                  ) : stats ? (
-                    <div className="space-y-3">
-                      <div className="flex justify-between items-center">
-                        <span className="text-sm text-zinc-600 dark:text-zinc-400">
-                          This Month
-                        </span>
-                        <span className={`px-2 py-1 rounded-full text-xs font-medium ${status?.color} grayscale opacity-80`}>
-                          {status?.label}
-                        </span>
-                      </div>
-
-                      <div className="grid grid-cols-2 gap-4">
-                        <div className="text-center">
-                          <p className="text-2xl font-bold text-zinc-900 dark:text-white">
-                            {stats.present_days}
-                          </p>
-                          <p className="text-xs text-zinc-600 dark:text-zinc-400">
-                            Present Days
-                          </p>
+                <Card className="rounded-[2.5rem] border-muted bg-muted/5 group-hover:bg-background group-hover:border-primary/30 transition-all duration-500 overflow-hidden relative">
+                   <div className="absolute top-8 right-8">
+                      <Badge variant="outline" className="bg-muted/50 text-[9px] font-black uppercase tracking-widest border-muted-foreground/20 text-muted-foreground">DEACTIVATED</Badge>
+                   </div>
+                   <CardHeader className="p-8 pb-4">
+                      <div className="flex items-start justify-between">
+                        <div className="max-w-[70%]">
+                           <p className="text-[10px] font-black text-muted-foreground uppercase tracking-[0.2em] mb-1">ID: {employee.user_id}</p>
+                           <CardTitle className="text-xl font-black truncate leading-tight opacity-60 group-hover:opacity-100 transition-opacity">
+                              {employee.name || employee.emp_code}
+                           </CardTitle>
                         </div>
-                        <div className="text-center">
-                          <p className="text-2xl font-bold text-zinc-900 dark:text-white">
-                            {stats.attendance_rate}%
-                          </p>
-                          <p className="text-xs text-zinc-600 dark:text-zinc-400">
-                            Attendance Rate
-                          </p>
+                        <div className="w-14 h-14 bg-muted border border-muted-foreground/10 rounded-2xl flex items-center justify-center group-hover:bg-primary/20 group-hover:scale-110 group-hover:border-primary/20 transition-all duration-500">
+                          <span className="text-muted-foreground font-black text-sm group-hover:text-primary">
+                            {(employee.name || employee.emp_code || "??").slice(0, 2).toUpperCase()}
+                          </span>
                         </div>
                       </div>
+                   </CardHeader>
 
-                      <div className="w-full bg-zinc-200 dark:bg-zinc-700 rounded-full h-2">
-                        <div
-                          className="bg-zinc-500 h-2 rounded-full transition-all duration-300"
-                          style={{ width: `${Math.min(stats.attendance_rate, 100)}%` }}
-                        ></div>
-                      </div>
-                    </div>
-                  ) : (
-                    <div className="text-center py-4">
-                      <p className="text-sm text-zinc-500 dark:text-zinc-400">
-                        No attendance data available
-                      </p>
-                    </div>
-                  )}
-                </div>
+                   <CardContent className="p-8 pt-0">
+                     {stats ? (
+                       <div className="space-y-6">
+                         <div className="flex justify-between items-center bg-muted/20 p-3 rounded-xl border border-muted/30">
+                            <span className="text-[10px] font-black text-muted-foreground uppercase tracking-widest pl-2">Legacy Sync</span>
+                            <Badge className={`rounded-lg font-black text-[10px] tracking-widest border shadow-none ${status?.color}`}>
+                               {status?.label}
+                            </Badge>
+                         </div>
+
+                         <div className="grid grid-cols-2 gap-4">
+                            <div className="bg-muted/30 p-4 rounded-2xl text-center">
+                               <p className="text-2xl font-black text-muted-foreground group-hover:text-foreground transition-colors">{stats.present_days}</p>
+                               <p className="text-[9px] font-bold text-muted-foreground uppercase tracking-widest mt-1">Logs</p>
+                            </div>
+                            <div className="bg-muted/30 p-4 rounded-2xl text-center">
+                               <p className="text-2xl font-black text-muted-foreground group-hover:text-foreground transition-colors">{Math.round(stats.attendance_rate)}%</p>
+                               <p className="text-[9px] font-bold text-muted-foreground uppercase tracking-widest mt-1">Rate</p>
+                            </div>
+                         </div>
+
+                         <div className="relative pt-2">
+                            <div className="w-full bg-muted/30 rounded-full h-1.5 overflow-hidden">
+                               <div
+                                 className="bg-muted-foreground/30 group-hover:bg-primary h-full transition-all duration-1000 ease-out"
+                                 style={{ width: `${Math.min(stats.attendance_rate, 100)}%` }}
+                               />
+                            </div>
+                         </div>
+                       </div>
+                     ) : (
+                       <div className="p-8 text-center bg-muted/20 rounded-[1.5rem] border border-dashed border-zinc-500/20">
+                          <AlertCircle className="w-6 h-6 text-muted-foreground/20 mx-auto mb-2" />
+                          <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest">Incomplete Record</p>
+                       </div>
+                     )}
+                   </CardContent>
+                </Card>
               </Link>
             );
           })}
         </div>
 
-        {filteredEmployees.length === 0 && (
-          <div className="text-center py-12">
-            <div className="w-16 h-16 bg-zinc-100 dark:bg-zinc-800 rounded-full flex items-center justify-center mx-auto mb-4 grayscale">
-              <span className="text-2xl">📦</span>
+        {filteredEmployees.length === 0 && !loading && (
+          <div className="text-center py-20 bg-muted/5 rounded-[3rem] border-2 border-dashed border-muted grayscale opacity-50">
+            <div className="w-20 h-20 bg-muted rounded-full flex items-center justify-center mx-auto mb-6">
+               <Archive className="w-10 h-10 opacity-20" />
             </div>
-            <h3 className="text-lg font-semibold text-zinc-900 dark:text-white mb-2">
-              No archived employees
+            <h3 className="text-2xl font-black tracking-tight mb-2">
+              End of Line
             </h3>
-            <p className="text-zinc-600 dark:text-zinc-400">
-              {searchTerm ? "No results found for your search" : "Archived records will appear here"}
+            <p className="text-muted-foreground font-medium">
+              No historical data clusters matching the current query.
             </p>
           </div>
         )}

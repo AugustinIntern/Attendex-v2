@@ -4,6 +4,9 @@ import Link from "next/link";
 import { useState } from "react";
 import { useAuth } from "@/lib/auth-context";
 import { useRouter } from "next/navigation";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import { Menu, LogOut, User, ChevronDown, ExternalLink, Zap } from "lucide-react";
 
 interface NavbarProps {
   onMenuToggle?: () => void;
@@ -20,7 +23,6 @@ export default function Navbar({ onMenuToggle }: NavbarProps) {
     router.push("/login");
   };
 
-  // Extract initials for avatar
   const getInitials = (email: string) => {
     return email
       .split("@")[0]
@@ -31,115 +33,102 @@ export default function Navbar({ onMenuToggle }: NavbarProps) {
   };
 
   return (
-    <nav className="bg-white dark:bg-zinc-900 border-b border-zinc-200 dark:border-zinc-800 sticky top-0 z-50">
-      <div className="px-4 sm:px-6 lg:px-8 py-4">
+    <nav className="bg-background/80 backdrop-blur-xl border-b border-muted sticky top-0 z-50">
+      <div className="px-4 sm:px-8 py-4">
         <div className="flex items-center justify-between gap-4">
+
           {/* Left: Menu toggle & Logo */}
           <div className="flex items-center gap-4">
-            <button
+            <Button
               onClick={onMenuToggle}
-              className="p-2 rounded-lg hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors"
+              variant="ghost"
+              size="icon"
+              className="w-11 h-11 rounded-xl hover:bg-muted/50"
               aria-label="Toggle menu"
             >
-              <svg
-                className="w-6 h-6"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M4 6h16M4 12h16M4 18h16"
-                />
-              </svg>
-            </button>
+              <Menu className="w-5 h-5" />
+            </Button>
 
-            <Link href="/dashboard" className="flex items-center gap-2">
-              <div className="w-8 h-8 bg-linear-to-br from-blue-600 to-cyan-600 rounded-lg flex items-center justify-center">
-                <span className="text-white font-bold text-sm">A</span>
+            <Link href="/dashboard" className="flex items-center gap-3 group">
+              <div className="w-9 h-9 bg-primary rounded-xl flex items-center justify-center shadow-lg shadow-primary/30 group-hover:scale-110 transition-transform">
+                <Zap className="w-5 h-5 text-primary-foreground" />
               </div>
-              <span className="hidden sm:inline font-bold text-lg text-zinc-900 dark:text-white">
-                AttendEX
-              </span>
+              <div className="hidden sm:flex flex-col">
+                <span className="font-black text-base tracking-tighter text-foreground leading-none">
+                  AttendEX
+                </span>
+                <span className="text-[9px] font-bold text-muted-foreground uppercase tracking-[0.2em] leading-none mt-0.5">
+                  v2 SYSTEM
+                </span>
+              </div>
             </Link>
           </div>
 
-          {/* Center: Spacer */}
-          <div className="flex-1" />
-
-          {/* Right: Options & User Profile */}
-          <div className="flex items-center gap-4">
-            <button
-              className="p-2 rounded-lg hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors"
-              aria-label="Options"
-            >
-              <svg
-                className="w-6 h-6"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M10.5 1.5H3.75A2.25 2.25 0 001.5 3.75v16.5A2.25 2.25 0 003.75 22.5h16.5a2.25 2.25 0 002.25-2.25V10.5M22.5 1.5h-9m9 0v9m0-9L10.5 13.5"
-                />
-              </svg>
-            </button>
-
+          {/* Right: User Menu */}
+          <div className="flex items-center gap-3">
             <div className="relative">
               <button
                 onClick={() => setShowUserMenu(!showUserMenu)}
-                className="flex items-center gap-2 p-2 rounded-lg hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors"
+                className="flex items-center gap-3 px-4 py-2 rounded-2xl border border-muted bg-muted/20 hover:bg-muted/40 transition-all"
               >
-                <div className="w-8 h-8 bg-linear-to-br from-purple-600 to-pink-600 rounded-full flex items-center justify-center">
-                  <span className="text-white text-xs font-bold">
+                <div className="w-8 h-8 bg-primary rounded-xl flex items-center justify-center shadow-md shadow-primary/20">
+                  <span className="text-primary-foreground text-xs font-black">
                     {user ? getInitials(user.email) : "??"}
                   </span>
                 </div>
-                <span className="hidden sm:inline text-sm font-medium text-zinc-900 dark:text-white">
-                  {user?.admin ? "Admin" : "User"}
-                </span>
-                <svg
-                  className="w-4 h-4 text-zinc-600 dark:text-zinc-400"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M19 14l-7 7m0 0l-7-7m7 7V3"
-                  />
-                </svg>
+                <div className="hidden sm:flex flex-col items-start">
+                  <span className="text-xs font-black text-foreground tracking-tight leading-none">
+                    {user?.admin ? "Administrator" : "User"}
+                  </span>
+                  <span className="text-[9px] font-bold text-muted-foreground leading-none mt-0.5 max-w-[120px] truncate">
+                    {user?.email}
+                  </span>
+                </div>
+                <ChevronDown className={`w-4 h-4 text-muted-foreground transition-transform ${showUserMenu ? 'rotate-180' : ''}`} />
               </button>
 
               {showUserMenu && (
-                <div className="absolute right-0 mt-2 w-48 bg-white dark:bg-zinc-800 rounded-lg shadow-lg border border-zinc-200 dark:border-zinc-700">
-                  <div className="p-3 border-b border-zinc-200 dark:border-zinc-700">
-                    <p className="text-sm font-semibold text-zinc-900 dark:text-white">
-                      {user?.email}
-                    </p>
+                <div className="absolute right-0 mt-3 w-64 bg-background rounded-[1.5rem] shadow-2xl shadow-black/20 border border-muted overflow-hidden z-50">
+                  <div className="p-5 border-b border-muted bg-muted/20">
+                    <div className="flex items-center gap-3">
+                      <div className="w-10 h-10 bg-primary rounded-xl flex items-center justify-center">
+                        <span className="text-primary-foreground font-black text-sm">
+                          {user ? getInitials(user.email) : "??"}
+                        </span>
+                      </div>
+                      <div>
+                        <p className="text-xs font-black text-foreground">
+                          {user?.admin ? "Administrator" : "User"}
+                        </p>
+                        <p className="text-[10px] font-bold text-muted-foreground truncate max-w-[160px]">
+                          {user?.email}
+                        </p>
+                      </div>
+                    </div>
+                    {user?.admin && (
+                      <Badge className="mt-3 bg-primary/10 text-primary border-none font-black text-[9px] tracking-widest rounded-lg px-3">
+                        ADMIN_CLEARANCE
+                      </Badge>
+                    )}
                   </div>
-                  <button className="w-full text-left px-4 py-2 text-sm text-zinc-700 dark:text-zinc-300 hover:bg-zinc-100 dark:hover:bg-zinc-700 transition-colors">
-                    Profile
-                  </button>
-                  <button
-                    onClick={handleLogout}
-                    className="w-full text-left px-4 py-2 text-sm text-red-600 dark:text-red-400 hover:bg-zinc-100 dark:hover:bg-zinc-700 transition-colors border-t border-zinc-200 dark:border-zinc-700"
-                  >
-                    Logout
-                  </button>
+                  <div className="p-2">
+                    <button className="w-full flex items-center gap-3 px-4 py-3 text-sm font-bold text-muted-foreground hover:text-foreground hover:bg-muted/40 rounded-xl transition-all">
+                      <User className="w-4 h-4" />
+                      Profile Settings
+                    </button>
+                    <button
+                      onClick={handleLogout}
+                      className="w-full flex items-center gap-3 px-4 py-3 text-sm font-bold text-destructive hover:bg-destructive/10 rounded-xl transition-all"
+                    >
+                      <LogOut className="w-4 h-4" />
+                      Logout
+                    </button>
+                  </div>
                 </div>
               )}
             </div>
           </div>
         </div>
-
       </div>
     </nav>
   );

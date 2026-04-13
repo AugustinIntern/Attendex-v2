@@ -5,7 +5,13 @@ import Link from "next/link";
 import { supabase } from "@/lib/supabase";
 import AppLayout from "@/components/AppLayout";
 import AddEmployeeModal from "@/components/AddEmployeeModal";
-import { getAllEmployees, EmployeeRecord } from "@/lib/employees";
+import { getAllEmployees } from "@/lib/employees";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { Skeleton } from "@/components/ui/skeleton";
+import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
+import { UserPlus, Search, Users, TrendingUp, AlertCircle } from "lucide-react";
 
 interface Employee {
   user_id: number;
@@ -37,7 +43,6 @@ export default function EmployeesPage() {
     try {
       setLoading(true);
 
-      // Fetch employees from the UI API (allowedpeople table)
       const employeesResponse = await fetch("/api/employees");
       const employeesData = await employeesResponse.json();
 
@@ -51,7 +56,6 @@ export default function EmployeesPage() {
       );
       setEmployees(employeeList);
 
-      // Get attendance logs for the current month
       const now = new Date();
       const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
       const endOfMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0);
@@ -67,7 +71,6 @@ export default function EmployeesPage() {
         return;
       }
 
-      // Calculate stats for each employee
       const stats: EmployeeStats[] = employeeList.map((employee: Employee) => {
         const userId = employee.user_id;
         const employeeLogs = (userId !== undefined && logs)
@@ -106,62 +109,73 @@ export default function EmployeesPage() {
   }, [employees, searchTerm]);
 
   const getAttendanceStatus = (rate: number) => {
-    if (rate >= 90) return { label: "Excellent", color: "text-green-600 bg-green-50" };
-    if (rate >= 75) return { label: "Good", color: "text-blue-600 bg-blue-50" };
-    if (rate >= 60) return { label: "Fair", color: "text-yellow-600 bg-yellow-50" };
-    return { label: "Poor", color: "text-red-600 bg-red-50" };
+    if (rate >= 90) return { label: "EXCELLENT", variant: "default" as const, color: "bg-emerald-600" };
+    if (rate >= 75) return { label: "OPTIMAL", variant: "secondary" as const, color: "bg-blue-500" };
+    if (rate >= 60) return { label: "WARNING", variant: "outline" as const, color: "text-amber-500 border-amber-500" };
+    return { label: "CRITICAL", variant: "destructive" as const, color: "bg-destructive" };
   };
 
   return (
     <AppLayout>
-      <div className="space-y-6">
-        {/* Header */}
-        <div className="flex items-center justify-between">
+      <div className="space-y-10">
+        <div className="flex flex-col md:flex-row md:items-end justify-between gap-6">
           <div>
-            <h1 className="text-3xl font-bold text-zinc-900 dark:text-white">
-              Active Employees
+            <h1 className="text-4xl font-extrabold text-foreground tracking-tight">
+              Workforce Overview
             </h1>
-            <p className="text-zinc-600 dark:text-zinc-400 mt-1">
-              Manage and view employee information and attendance statistics
+            <p className="text-muted-foreground mt-2 font-medium">
+              Real-time monitoring and administrative management of personnel.
             </p>
           </div>
-          <div className="flex items-center gap-6">
-            <div className="text-center">
-              <p className="text-2xl font-bold text-zinc-900 dark:text-white">
-                {employees.length}
-              </p>
-              <p className="text-sm text-zinc-600 dark:text-zinc-400">
-                Total Employees
-              </p>
-            </div>
-            <button
-              onClick={() => setShowAddModal(true)}
-              className="px-4 py-2 bg-gradient-to-r from-blue-600 to-cyan-600 hover:from-blue-700 hover:to-cyan-700 text-white font-semibold rounded-lg transition-all flex items-center gap-2"
-            >
-              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
-              </svg>
-              Add Employee
-            </button>
+          
+          <div className="flex items-center gap-4">
+             <Card className="bg-muted/30 border-none shadow-none px-6 py-2 flex items-center gap-4 rounded-2xl">
+                <Users className="w-5 h-5 text-primary" />
+                <div>
+                   <p className="text-2xl font-black text-foreground leading-none">{employees.length}</p>
+                   <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest mt-1">Personnel</p>
+                </div>
+             </Card>
+             <Button 
+               onClick={() => setShowAddModal(true)}
+               className="h-14 px-8 rounded-2xl font-black text-sm uppercase tracking-wider bg-primary hover:bg-primary/90 shadow-lg shadow-primary/20"
+             >
+               <UserPlus className="w-5 h-5 mr-3" />
+               Join System
+             </Button>
           </div>
         </div>
 
-        {/* Search */}
-        <div className="flex items-center gap-4">
-          <div className="flex-1 max-w-md">
-            <input
-              type="text"
-              placeholder="Search employees by name or code..."
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              className="w-full px-4 py-2 rounded-lg border border-zinc-300 dark:border-zinc-600 bg-white dark:bg-zinc-700 text-zinc-900 dark:text-white placeholder-zinc-500 dark:placeholder-zinc-400 focus:outline-none focus:ring-2 focus:ring-blue-500"
-            />
-          </div>
+        <div className="relative group max-w-2xl">
+           <Search className="absolute left-5 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground group-focus-within:text-primary transition-colors" />
+           <Input
+            type="text"
+            placeholder="Identity scan..."
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+            className="h-16 pl-14 pr-6 rounded-[1.25rem] bg-muted/30 border-muted focus:bg-background text-lg font-bold transition-all"
+          />
         </div>
 
-        {/* Employee Cards Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {filteredEmployees.map((employee) => {
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+          {loading ? (
+            Array(6).fill(0).map((_, i) => (
+              <Card key={i} className="rounded-[2.5rem] overflow-hidden">
+                <CardHeader className="p-8 pb-0">
+                  <div className="flex justify-between">
+                    <div className="space-y-2 flex-1">
+                      <Skeleton className="h-6 w-3/4" />
+                      <Skeleton className="h-4 w-1/2" />
+                    </div>
+                    <Skeleton className="w-14 h-14 rounded-2xl" />
+                  </div>
+                </CardHeader>
+                <CardContent className="p-8">
+                   <Skeleton className="h-20 w-full rounded-2xl" />
+                </CardContent>
+              </Card>
+            ))
+          ) : filteredEmployees.map((employee) => {
             const stats = employeeStats.find(s => s.user_id === employee.user_id);
             const status = stats ? getAttendanceStatus(stats.attendance_rate) : null;
 
@@ -169,101 +183,91 @@ export default function EmployeesPage() {
               <Link
                 key={employee.user_id}
                 href={`/employees/${employee.user_id}`}
-                className="block"
+                className="group block"
               >
-                <div className="bg-white dark:bg-zinc-800 rounded-lg border border-zinc-200 dark:border-zinc-700 p-6 hover:shadow-lg hover:border-blue-300 dark:hover:border-blue-600 transition-all cursor-pointer">
-                  <div className="flex items-start justify-between mb-4">
-                    <div>
-                      <h3 className="text-lg font-semibold text-zinc-900 dark:text-white truncate" title={employee.name}>
-                        {employee.name || employee.emp_code || "N/A"}
-                      </h3>
-                      <p className="text-sm text-zinc-600 dark:text-zinc-400">
-                        Employee ID: {employee.user_id}
-                      </p>
-                    </div>
-                    <div className="w-12 h-12 bg-gradient-to-br from-blue-500 to-purple-600 rounded-full flex items-center justify-center">
-                      <span className="text-white font-bold text-sm">
-                        {(employee.name || employee.emp_code || "??").slice(0, 2)}
-                      </span>
-                    </div>
-                  </div>
-
-                  {loading ? (
-                    <div className="space-y-2">
-                      <div className="h-4 bg-zinc-200 dark:bg-zinc-700 rounded animate-pulse"></div>
-                      <div className="h-4 bg-zinc-200 dark:bg-zinc-700 rounded animate-pulse w-3/4"></div>
-                    </div>
-                  ) : stats ? (
-                    <div className="space-y-3">
-                      <div className="flex justify-between items-center">
-                        <span className="text-sm text-zinc-600 dark:text-zinc-400">
-                          This Month
-                        </span>
-                        <span className={`px-2 py-1 rounded-full text-xs font-medium ${status?.color}`}>
-                          {status?.label}
-                        </span>
-                      </div>
-
-                      <div className="grid grid-cols-2 gap-4">
-                        <div className="text-center">
-                          <p className="text-2xl font-bold text-zinc-900 dark:text-white">
-                            {stats.present_days}
-                          </p>
-                          <p className="text-xs text-zinc-600 dark:text-zinc-400">
-                            Present Days
-                          </p>
+                <Card className="rounded-[2.5rem] border-muted bg-background hover:bg-muted/5 group-hover:border-primary/50 transition-all duration-500 overflow-hidden relative">
+                   <div className="absolute top-0 right-0 p-8">
+                      <TrendingUp className="w-5 h-5 text-muted-foreground opacity-20 group-hover:text-primary group-hover:opacity-100 transition-all" />
+                   </div>
+                   <CardHeader className="p-8 pb-4">
+                      <div className="flex items-start justify-between">
+                        <div className="max-w-[70%]">
+                           <p className="text-[10px] font-black text-muted-foreground uppercase tracking-[0.2em] mb-1">ID: {employee.user_id}</p>
+                           <CardTitle className="text-xl font-black truncate leading-tight">
+                              {employee.name || employee.emp_code}
+                           </CardTitle>
                         </div>
-                        <div className="text-center">
-                          <p className="text-2xl font-bold text-zinc-900 dark:text-white">
-                            {stats.attendance_rate}%
-                          </p>
-                          <p className="text-xs text-zinc-600 dark:text-zinc-400">
-                            Attendance Rate
-                          </p>
+                        <div className="w-14 h-14 bg-primary/10 rounded-2xl flex items-center justify-center group-hover:bg-primary group-hover:scale-110 transition-all duration-500">
+                          <span className="text-primary font-black text-sm group-hover:text-primary-foreground">
+                            {(employee.name || employee.emp_code || "??").slice(0, 2).toUpperCase()}
+                          </span>
                         </div>
                       </div>
+                   </CardHeader>
 
-                      <div className="w-full bg-zinc-200 dark:bg-zinc-700 rounded-full h-2">
-                        <div
-                          className="bg-blue-600 h-2 rounded-full transition-all duration-300"
-                          style={{ width: `${Math.min(stats.attendance_rate, 100)}%` }}
-                        ></div>
-                      </div>
-                    </div>
-                  ) : (
-                    <div className="text-center py-4">
-                      <p className="text-sm text-zinc-500 dark:text-zinc-400">
-                        No attendance data available
-                      </p>
-                    </div>
-                  )}
-                </div>
+                   <CardContent className="p-8 pt-0">
+                     {stats ? (
+                       <div className="space-y-6">
+                         <div className="flex justify-between items-center bg-muted/30 p-3 rounded-xl">
+                            <span className="text-[10px] font-black text-muted-foreground uppercase tracking-widest pl-2">Reliability</span>
+                            <Badge className={`rounded-lg font-black text-[10px] tracking-widest border-none ${status?.color} text-white`}>
+                               {status?.label}
+                            </Badge>
+                         </div>
+
+                         <div className="grid grid-cols-2 gap-4">
+                            <div className="bg-muted/10 p-4 rounded-2xl text-center">
+                               <p className="text-2xl font-black">{stats.present_days}</p>
+                               <p className="text-[9px] font-bold text-muted-foreground uppercase tracking-widest mt-1">Days Logs</p>
+                            </div>
+                            <div className="bg-muted/10 p-4 rounded-2xl text-center">
+                               <p className="text-2xl font-black">{Math.round(stats.attendance_rate)}%</p>
+                               <p className="text-[9px] font-bold text-muted-foreground uppercase tracking-widest mt-1">Duty Sync</p>
+                            </div>
+                         </div>
+
+                         <div className="relative pt-2">
+                            <div className="w-full bg-muted/30 rounded-full h-1.5 overflow-hidden">
+                               <div
+                                 className="bg-primary h-full transition-all duration-1000 ease-out"
+                                 style={{ width: `${Math.min(stats.attendance_rate, 100)}%` }}
+                               />
+                            </div>
+                         </div>
+                       </div>
+                     ) : (
+                       <div className="p-8 text-center bg-muted/10 rounded-[1.5rem] border border-dashed border-muted">
+                          <AlertCircle className="w-6 h-6 text-muted-foreground/30 mx-auto mb-2" />
+                          <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest">Awaiting Logs</p>
+                       </div>
+                     )}
+                   </CardContent>
+                </Card>
               </Link>
             );
           })}
         </div>
 
-        {filteredEmployees.length === 0 && (
-          <div className="text-center py-12">
-            <div className="w-16 h-16 bg-zinc-100 dark:bg-zinc-800 rounded-full flex items-center justify-center mx-auto mb-4">
-              <span className="text-2xl">👥</span>
+        {filteredEmployees.length === 0 && !loading && (
+          <div className="text-center py-20 bg-muted/10 rounded-[3rem] border-2 border-dashed border-muted">
+            <div className="w-20 h-20 bg-muted rounded-full flex items-center justify-center mx-auto mb-6">
+               <Search className="w-10 h-10 opacity-20" />
             </div>
-            <h3 className="text-lg font-semibold text-zinc-900 dark:text-white mb-2">
-              No employees found
+            <h3 className="text-2xl font-black tracking-tight mb-2">
+              Identity Mismatch
             </h3>
-            <p className="text-zinc-600 dark:text-zinc-400">
-              {searchTerm ? "Try adjusting your search terms" : "No employees available"}
+            <p className="text-muted-foreground font-medium">
+              {searchTerm ? "No personnel records match these parameters." : "The workforce registry is currently offline."}
             </p>
           </div>
         )}
       </div>
 
-      {/* Add Employee Modal */}
       <AddEmployeeModal
         isOpen={showAddModal}
         onClose={() => setShowAddModal(false)}
         onSuccess={() => {
-          fetchEmployeeStats(); // Refresh the employee list
+          fetchEmployeeStats();
         }}
       />
     </AppLayout>

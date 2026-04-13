@@ -3,6 +3,12 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { supabase } from "@/lib/supabase";
 import { getAllEmployees, getEmployeeName } from "@/lib/employees";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { Badge } from "@/components/ui/badge";
+import { Skeleton } from "@/components/ui/skeleton";
+import { Input } from "@/components/ui/input";
+import { Calendar, CheckCircle2, XCircle, Clock } from "lucide-react";
 
 interface AttendanceLog {
   idx: number;
@@ -42,7 +48,7 @@ export default function PastDayPage() {
   }, []);
 
   const formattedDateLabel = useMemo(() => {
-    if (!selectedDate) return "Select a date to view attendance";
+    if (!selectedDate) return "No Selection";
     return new Date(selectedDate).toLocaleDateString("en-US", {
       weekday: "long",
       year: "numeric",
@@ -96,165 +102,165 @@ export default function PastDayPage() {
   const absenceCount = employeeCount - presentCount;
 
   return (
-    <div className="space-y-8">
-      <div>
-        <h1 className="text-3xl font-bold text-zinc-900 dark:text-white">
-          Past Day Attendance
-        </h1>
-        <p className="text-zinc-600 dark:text-zinc-400 mt-1">
-          Review attendance logs for a selected day.
-        </p>
-      </div>
+    <div className="space-y-10">
+      <div className="flex flex-col md:flex-row md:items-end justify-between gap-6">
+        <div>
+          <h1 className="text-4xl font-extrabold text-foreground tracking-tight">
+            Historical Data
+          </h1>
+          <p className="text-muted-foreground mt-2 font-medium">
+            Analyze and review past attendance telemetry.
+          </p>
+        </div>
 
-      <div className="grid gap-4 sm:grid-cols-[220px_1fr] items-end">
-        <div className="rounded-lg border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 p-6">
-          <label className="block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-2">
-            Choose a date
-          </label>
-          <input
+        <div className="flex bg-muted/50 p-1.5 rounded-2xl border border-muted w-full md:w-auto">
+           <div className="flex items-center gap-3 px-4">
+              <Calendar className="w-5 h-5 text-primary" />
+              <div className="h-8 w-px bg-muted" />
+           </div>
+           <Input
             type="date"
-            className="w-full rounded-lg border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 px-4 py-3 text-zinc-900 dark:text-white focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20"
+            className="border-0 bg-transparent shadow-none focus-visible:ring-0 text-lg font-black h-12 w-full"
             value={selectedDate}
             onChange={(event) => setSelectedDate(event.target.value)}
             max={new Date().toISOString().split("T")[0]}
           />
         </div>
+      </div>
 
-        <div className="rounded-lg border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 p-6">
-          <p className="text-sm text-zinc-600 dark:text-zinc-400">Viewing day</p>
-          <p className="mt-2 text-lg font-semibold text-zinc-900 dark:text-white">
-            {formattedDateLabel}
-          </p>
-          <p className="mt-3 text-sm text-zinc-600 dark:text-zinc-400">
-            {selectedDate
-              ? `Showing attendance records for ${new Date(selectedDate).toLocaleDateString()}`
-              : "Pick a date to load records."}
-          </p>
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+        <Card className="md:col-span-2 border-primary/10 shadow-xl shadow-primary/5 bg-primary/5 rounded-[2.5rem]">
+           <CardContent className="p-10 flex flex-col justify-center h-full">
+              <p className="text-xs font-black uppercase tracking-[0.2em] text-primary/60 mb-2">Selected Timeframe</p>
+              <h2 className="text-3xl font-black text-foreground">{formattedDateLabel}</h2>
+              <p className="text-muted-foreground mt-4 font-medium italic">
+                {selectedDate
+                  ? `Extraction complete for ${new Date(selectedDate).toLocaleDateString()}`
+                  : "Standby for date selection..."}
+              </p>
+           </CardContent>
+        </Card>
+
+        <div className="grid gap-6">
+           <Card className="border-emerald-500/10 shadow-lg shadow-emerald-500/5">
+              <CardContent className="p-6 flex items-center justify-between">
+                 <div>
+                    <p className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">Present</p>
+                    <p className="text-3xl font-black text-emerald-600 dark:text-emerald-400 mt-1">{presentCount}</p>
+                 </div>
+                 <div className="w-12 h-12 bg-emerald-100 dark:bg-emerald-900/30 rounded-xl flex items-center justify-center">
+                    <CheckCircle2 className="w-6 h-6 text-emerald-600 dark:text-emerald-400" />
+                 </div>
+              </CardContent>
+           </Card>
+
+           <Card className="border-destructive/10 shadow-lg shadow-destructive-500/5">
+              <CardContent className="p-6 flex items-center justify-between">
+                 <div>
+                    <p className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">Absent</p>
+                    <p className="text-3xl font-black text-destructive mt-1">{absenceCount}</p>
+                 </div>
+                 <div className="w-12 h-12 bg-destructive/10 rounded-xl flex items-center justify-center">
+                    <XCircle className="w-6 h-6 text-destructive" />
+                 </div>
+              </CardContent>
+           </Card>
         </div>
       </div>
 
       {error && (
-        <div className="rounded-lg bg-red-50 dark:bg-red-950 p-6 border border-red-200 dark:border-red-800">
-          <p className="text-red-800 dark:text-red-300">{error}</p>
-        </div>
+        <Card className="border-destructive/50 bg-destructive/10">
+          <CardContent className="p-6">
+            <p className="text-destructive font-bold flex items-center gap-2">
+              <XCircle className="w-5 h-5" />
+              {error}
+            </p>
+          </CardContent>
+        </Card>
       )}
 
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        <div className="bg-white dark:bg-zinc-900 rounded-lg border border-zinc-200 dark:border-zinc-800 p-6">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-zinc-600 dark:text-zinc-400 text-sm font-medium">
-                Present Summary
-              </p>
-              <p className="text-4xl font-bold text-green-600 dark:text-green-400 mt-2">
-                {presentCount}
-              </p>
-            </div>
-            <div className="w-16 h-16 bg-green-100 dark:bg-green-900/30 rounded-full flex items-center justify-center">
-              <span className="text-2xl">✓</span>
-            </div>
-          </div>
-        </div>
+      <Card className="rounded-[2.5rem] border-muted overflow-hidden">
+        <CardHeader className="bg-muted/30 px-10 py-8 border-b border-muted">
+           <CardTitle className="text-2xl font-black tracking-tight flex items-center gap-4">
+              <div className="w-1.5 h-8 bg-primary rounded-full" />
+              Archives Analysis
+           </CardTitle>
+        </CardHeader>
 
-        <div className="bg-white dark:bg-zinc-900 rounded-lg border border-zinc-200 dark:border-zinc-800 p-6">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-zinc-600 dark:text-zinc-400 text-sm font-medium">
-                Absence Summary
-              </p>
-              <p className="text-4xl font-bold text-red-600 dark:text-red-400 mt-2">
-                {absenceCount}
-              </p>
+        <CardContent className="p-0">
+          {loading ? (
+            <div className="p-10 space-y-4">
+              {[1, 2, 3, 4].map((i) => (
+                <Skeleton key={i} className="h-16 w-full rounded-2xl" />
+              ))}
             </div>
-            <div className="w-16 h-16 bg-red-100 dark:bg-red-900/30 rounded-full flex items-center justify-center">
-              <span className="text-2xl">✕</span>
+          ) : !selectedDate ? (
+            <div className="p-20 text-center text-muted-foreground">
+               <div className="w-20 h-20 bg-muted rounded-full flex items-center justify-center mx-auto mb-6">
+                  <Calendar className="w-10 h-10 opacity-20" />
+               </div>
+              <p className="font-bold text-lg">System Standby</p>
+              <p className="mt-1 opacity-70">Initialize a date selection to extract data from archives.</p>
             </div>
-          </div>
-        </div>
-      </div>
-
-      <div className="bg-white dark:bg-zinc-900 rounded-lg border border-zinc-200 dark:border-zinc-800 overflow-hidden">
-        <div className="px-6 py-4 border-b border-zinc-200 dark:border-zinc-800 bg-zinc-50 dark:bg-zinc-800">
-          <h2 className="font-semibold text-zinc-900 dark:text-white">
-            {selectedDate ? `Attendance for ${new Date(selectedDate).toLocaleDateString()}` : "Select a date to view attendance"}
-          </h2>
-        </div>
-
-        {loading ? (
-          <div className="flex items-center justify-center py-12">
-            <div className="text-center">
-              <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
-              <p className="mt-2 text-zinc-600 dark:text-zinc-400">
-                Loading selected day attendance...
-              </p>
+          ) : logs.length === 0 ? (
+            <div className="p-20 text-center text-muted-foreground">
+               <div className="w-20 h-20 bg-muted rounded-full flex items-center justify-center mx-auto mb-6">
+                  <Clock className="w-10 h-10 opacity-20" />
+               </div>
+              <p className="font-bold text-lg">Zero Records Found</p>
+              <p className="mt-1 opacity-70">No telemetry data was logged for {new Date(selectedDate).toLocaleDateString()}.</p>
             </div>
-          </div>
-        ) : !selectedDate ? (
-          <div className="p-8 text-center text-zinc-600 dark:text-zinc-400">
-            Choose a date from the calendar above to load attendance records.
-          </div>
-        ) : logs.length === 0 ? (
-          <div className="p-8 text-center text-zinc-600 dark:text-zinc-400">
-            No attendance records found for this day.
-          </div>
-        ) : (
-          <div className="overflow-x-auto">
-            <table className="w-full">
-              <thead>
-                <tr className="border-b border-zinc-200 dark:border-zinc-800 bg-zinc-50 dark:bg-zinc-800">
-                  <th className="px-6 py-3 text-left text-xs font-semibold text-zinc-700 dark:text-zinc-300 uppercase tracking-wider">
-                    Name
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-semibold text-zinc-700 dark:text-zinc-300 uppercase tracking-wider">
-                    ID
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-semibold text-zinc-700 dark:text-zinc-300 uppercase tracking-wider">
-                    Timestamp
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-semibold text-zinc-700 dark:text-zinc-300 uppercase tracking-wider">
-                    Parcel
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-semibold text-zinc-700 dark:text-zinc-300 uppercase tracking-wider">
-                    Type
-                  </th>
-                </tr>
-              </thead>
-              <tbody>
-                {logs.map((log, index) => (
-                  <tr
-                    key={log.idx || index}
-                    className="border-b border-zinc-200 dark:border-zinc-800 hover:bg-zinc-50 dark:hover:bg-zinc-800 transition-colors"
-                  >
-                    <td className="px-6 py-4 text-sm text-zinc-900 dark:text-zinc-100 font-medium">
-                      {employeeCodes.get(log.user_id) ?? `User ${log.user_id}`}
-                    </td>
-                    <td className="px-6 py-4 text-sm text-zinc-900 dark:text-zinc-100">
-                      {log.user_id}
-                    </td>
-                    <td className="px-6 py-4 text-sm text-zinc-900 dark:text-zinc-100">
-                      {new Date(log.timestamp).toLocaleTimeString()}
-                    </td>
-                    <td className="px-6 py-4 text-sm text-zinc-600 dark:text-zinc-400">
-                      -
-                    </td>
-                    <td className="px-6 py-4 text-sm">
-                      <span
-                        className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
-                          log.check_type === 1
-                            ? "bg-green-100 dark:bg-green-900 text-green-800 dark:text-green-200"
-                            : "bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-200"
-                        }`}
-                      >
-                        {log.check_type === 1 ? "Check In" : "Check Out"}
-                      </span>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        )}
-      </div>
+          ) : (
+            <div className="overflow-x-auto">
+              <Table>
+                <TableHeader className="bg-muted/50">
+                  <TableRow>
+                    <TableHead className="px-10 font-black h-16 uppercase text-xs tracking-[0.2em]">Employee Identity</TableHead>
+                    <TableHead className="font-black uppercase text-xs tracking-[0.2em]">ID</TableHead>
+                    <TableHead className="font-black uppercase text-xs tracking-[0.2em]">Time Detected</TableHead>
+                    <TableHead className="px-10 font-black uppercase text-xs tracking-[0.2em] text-right">Event Status</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {logs.map((log, index) => (
+                    <TableRow
+                      key={log.idx || index}
+                      className="hover:bg-muted/30 transition-colors"
+                    >
+                      <TableCell className="px-10 py-6 font-bold">
+                        <div className="flex items-center gap-4">
+                           <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center text-primary font-black text-xs">
+                              {(employeeCodes.get(log.user_id) ?? "??").slice(0, 2).toUpperCase()}
+                           </div>
+                           {employeeCodes.get(log.user_id) ?? `System User ${log.user_id}`}
+                        </div>
+                      </TableCell>
+                      <TableCell className="font-mono text-muted-foreground text-sm">
+                        {log.user_id}
+                      </TableCell>
+                      <TableCell className="text-muted-foreground font-semibold">
+                        {new Date(log.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                      </TableCell>
+                      <TableCell className="px-10 text-right">
+                        <Badge
+                          variant={log.check_type === 1 ? "default" : "outline"}
+                          className={`rounded-full px-4 py-1 font-bold ${
+                            log.check_type === 1 
+                              ? "bg-emerald-600 hover:bg-emerald-700" 
+                              : "border-blue-500 text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-900/10"
+                          }`}
+                        >
+                          {log.check_type === 1 ? "CHECK-IN" : "CHECK-OUT"}
+                        </Badge>
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </div>
+          )}
+        </CardContent>
+      </Card>
     </div>
   );
 }

@@ -2,11 +2,16 @@
 
 import { useState, useEffect } from "react";
 import { useParams, useRouter } from "next/navigation";
-import { getAllEmployees, getEmployeeCode } from "@/lib/employees";
 import { supabase } from "@/lib/supabase";
 import AppLayout from "@/components/AppLayout";
 import EditEmployeeModal from "@/components/EditEmployeeModal";
 import ArchiveEmployeeModal from "@/components/ArchiveEmployeeModal";
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Skeleton } from "@/components/ui/skeleton";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { ChevronLeft, Edit3, Trash2, Calendar, Fingerprint, Mail, Hash, ShieldAlert, CheckCircle2, TrendingUp, Clock, AlertCircle } from "lucide-react";
 
 interface AttendanceLog {
   id: number;
@@ -50,7 +55,6 @@ export default function EmployeeDetailPage() {
     try {
       setLoading(true);
 
-      // Fetch employee from the database via the user_mapping table
       const { data: mappingData, error: mappingError } = await supabase
         .from("user_mapping")
         .select("user_id, emp_code, name, email, is_archived")
@@ -63,7 +67,6 @@ export default function EmployeeDetailPage() {
         return;
       }
 
-      // Get attendance logs for selected month
       const startOfMonth = new Date(selectedYear, selectedMonth, 1);
       const endOfMonth = new Date(selectedYear, selectedMonth + 1, 0);
 
@@ -80,7 +83,6 @@ export default function EmployeeDetailPage() {
         return;
       }
 
-      // Calculate attendance statistics
       const uniqueDays = new Set(
         logs?.map((log) => new Date(log.timestamp).toDateString()) || []
       );
@@ -107,21 +109,10 @@ export default function EmployeeDetailPage() {
   };
 
   const getAttendanceStatus = (rate: number) => {
-    if (rate >= 90) return { label: "Excellent", color: "text-green-600 bg-green-50 border-green-200" };
-    if (rate >= 75) return { label: "Good", color: "text-blue-600 bg-blue-50 border-blue-200" };
-    if (rate >= 60) return { label: "Fair", color: "text-yellow-600 bg-yellow-50 border-yellow-200" };
-    return { label: "Poor", color: "text-red-600 bg-red-50 border-red-200" };
-  };
-
-  const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleDateString("en-US", {
-      weekday: "short",
-      year: "numeric",
-      month: "short",
-      day: "numeric",
-      hour: "2-digit",
-      minute: "2-digit",
-    });
+    if (rate >= 90) return { label: "EXCELLENT", variant: "default" as const, color: "bg-emerald-600 shadow-emerald-500/20" };
+    if (rate >= 75) return { label: "OPTIMAL", variant: "secondary" as const, color: "bg-blue-500 shadow-blue-500/20" };
+    if (rate >= 60) return { label: "WARNING", variant: "outline" as const, color: "text-amber-500 border-amber-500 shadow-amber-500/10" };
+    return { label: "CRITICAL", variant: "destructive" as const, color: "bg-destructive shadow-destructive-500/20" };
   };
 
   const months = [
@@ -153,288 +144,280 @@ export default function EmployeeDetailPage() {
     }
   };
 
-  if (loading) {
+  if (loading && !employee) {
     return (
       <AppLayout>
-        <div className="flex items-center justify-center min-h-96">
-          <div className="text-center">
-            <div className="w-12 h-12 border-4 border-zinc-300 dark:border-zinc-700 border-t-blue-600 rounded-full animate-spin mx-auto mb-4"></div>
-            <p className="text-zinc-600 dark:text-zinc-400">Loading employee details...</p>
-          </div>
+        <div className="space-y-10">
+           <div className="flex items-center gap-6">
+              <Skeleton className="w-14 h-14 rounded-2xl" />
+              <div className="space-y-2">
+                 <Skeleton className="h-8 w-64" />
+                 <Skeleton className="h-4 w-32" />
+              </div>
+           </div>
+           <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
+              {Array(4).fill(0).map((_, i) => <Skeleton key={i} className="h-32 rounded-[2rem]" />)}
+           </div>
+           <Skeleton className="h-96 rounded-[2.5rem]" />
         </div>
       </AppLayout>
     );
   }
 
-  if (!employee) {
-    return (
-      <AppLayout>
-        <div className="text-center py-12">
-          <h2 className="text-xl font-semibold text-zinc-900 dark:text-white mb-2">
-            Employee not found
-          </h2>
-          <button
-            onClick={() => router.push("/employees")}
-            className="text-blue-600 hover:text-blue-700 dark:text-blue-400"
-          >
-            ← Back to employees
-          </button>
-        </div>
-      </AppLayout>
-    );
-  }
+  if (!employee) return null;
 
   const status = getAttendanceStatus(employee.attendance_rate);
 
   return (
     <AppLayout>
-      <div className="space-y-8">
-        {/* Navigation & Actions */}
-        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-          <div className="flex items-center gap-4">
-            <button
+      <div className="space-y-10">
+        {/* Navigation & Header Actions */}
+        <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
+          <div className="flex items-center gap-6">
+            <Button
               onClick={() => router.push("/employees")}
-              className="p-2.5 rounded-xl bg-white dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 hover:bg-zinc-100 dark:hover:bg-zinc-700 transition-all shadow-sm"
+              variant="outline"
+              size="icon"
+              className="w-14 h-14 rounded-2xl border-muted bg-background hover:bg-muted/30 hover:border-primary transition-all shadow-sm"
             >
-              <svg className="w-5 h-5 text-zinc-600 dark:text-zinc-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
-              </svg>
-            </button>
-            <h2 className="text-sm font-medium text-zinc-500 dark:text-zinc-400">
-              Employee Profile
-            </h2>
+              <ChevronLeft className="w-6 h-6" />
+            </Button>
+            <div>
+               <p className="text-[10px] font-black text-muted-foreground uppercase tracking-[0.2em] mb-1">Navigation / Workforce</p>
+               <h1 className="text-2xl font-black tracking-tight">Personnel Dossier</h1>
+            </div>
           </div>
 
-          <div className="flex items-center gap-3">
-            {!employee.is_archived && (
-              <>
-                <button
-                  onClick={() => setShowEditModal(true)}
-                  className="px-5 py-2.5 bg-white dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 hover:bg-zinc-50 dark:hover:bg-zinc-700 text-zinc-900 dark:text-white text-sm font-semibold rounded-xl transition-all shadow-sm flex items-center gap-2"
-                >
-                  <svg className="w-4 h-4 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
-                  </svg>
-                  Edit Profile
-                </button>
-                <button
-                  onClick={() => setShowArchiveModal(true)}
-                  disabled={isArchiving}
-                  className="px-5 py-2.5 bg-amber-50 dark:bg-amber-900/10 border border-amber-200 dark:border-amber-900/20 hover:bg-amber-100 dark:hover:bg-amber-900/20 text-amber-600 dark:text-amber-400 text-sm font-semibold rounded-xl transition-all shadow-sm flex items-center gap-2 disabled:opacity-50"
-                >
-                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 8h14M5 8a2 2 0 110-4h14a2 2 0 110 4M5 8v10a2 2 0 002 2h10a2 2 0 002-2V8m-9 4h4" />
-                  </svg>
-                  {isArchiving ? "Archiving..." : "Archive"}
-                </button>
-              </>
-            )}
-          </div>
-        </div>
-
-        {/* Main Profile Header */}
-        <div className="bg-white dark:bg-zinc-900 rounded-3xl border border-zinc-200 dark:border-zinc-800 p-8 shadow-sm overflow-hidden relative">
-          <div className="absolute top-0 right-0 p-8">
-            <div className="flex items-center gap-4">
-               <select
-                value={selectedMonth}
-                onChange={(e) => setSelectedMonth(parseInt(e.target.value))}
-                className="px-4 py-2 text-sm font-medium rounded-xl border border-zinc-200 dark:border-zinc-700 bg-zinc-50 dark:bg-zinc-800 text-zinc-900 dark:text-white focus:ring-2 focus:ring-blue-500/20 outline-none transition-all"
+          {!employee.is_archived && (
+            <div className="flex items-center gap-3">
+              <Button
+                onClick={() => setShowEditModal(true)}
+                variant="outline"
+                className="h-14 px-8 rounded-2xl font-black text-xs uppercase tracking-widest border-muted bg-background hover:bg-muted/30"
               >
-                {months.map((month, index) => (
-                  <option key={index} value={index}>{month}</option>
-                ))}
-              </select>
-
-              <select
-                value={selectedYear}
-                onChange={(e) => setSelectedYear(parseInt(e.target.value))}
-                className="px-4 py-2 text-sm font-medium rounded-xl border border-zinc-200 dark:border-zinc-700 bg-zinc-50 dark:bg-zinc-800 text-zinc-900 dark:text-white focus:ring-2 focus:ring-blue-500/20 outline-none transition-all"
+                <Edit3 className="w-4 h-4 mr-3 text-primary" />
+                Modify Record
+              </Button>
+              <Button
+                onClick={() => setShowArchiveModal(true)}
+                disabled={isArchiving}
+                variant="outline"
+                className="h-14 px-8 rounded-2xl font-black text-xs uppercase tracking-widest border-destructive/20 text-destructive bg-destructive/5 hover:bg-destructive hover:text-white transition-all shadow-lg shadow-destructive/10"
               >
-                {years.map((year) => (
-                  <option key={year} value={year}>{year}</option>
-                ))}
-              </select>
+                <Trash2 className="w-4 h-4 mr-3" />
+                {isArchiving ? "Deactivating..." : "Deactivate"}
+              </Button>
             </div>
-          </div>
-
-          <div className="flex flex-col md:flex-row items-start gap-8">
-            <div className="w-24 h-24 rounded-3xl bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center text-3xl font-bold text-white shadow-lg shadow-blue-500/20 uppercase">
-              {employee.name.slice(0, 2)}
-            </div>
-            
-            <div className="flex-1 space-y-4">
-              <div>
-                <div className="flex items-center gap-3">
-                  <h1 className="text-4xl font-black text-zinc-900 dark:text-white tracking-tight">
-                    {employee.name}
-                  </h1>
-                  {employee.is_archived && (
-                    <span className="px-3 py-1 text-xs font-bold uppercase tracking-wider text-amber-600 bg-amber-50 dark:bg-amber-900/30 border border-amber-200 dark:border-amber-800 rounded-lg">
-                      Archived Account
-                    </span>
-                  )}
-                </div>
-                <p className="text-zinc-500 dark:text-zinc-400 font-medium text-lg mt-1">
-                  {employee.email}
-                </p>
-              </div>
-
-              <div className="grid grid-cols-2 md:grid-cols-4 gap-6 pt-4">
-                <div>
-                  <p className="text-xs font-bold text-zinc-400 dark:text-zinc-500 uppercase tracking-widest">
-                    Employee Code
-                  </p>
-                  <p className="text-zinc-900 dark:text-white font-mono mt-1 pr-4 py-2 text-lg">
-                    {employee.emp_code}
-                  </p>
-                </div>
-                <div>
-                  <p className="text-xs font-bold text-zinc-400 dark:text-zinc-500 uppercase tracking-widest">
-                    System ID
-                  </p>
-                  <p className="text-zinc-900 dark:text-white font-mono mt-1 py-2 text-lg">
-                    #{employee.user_id}
-                  </p>
-                </div>
-              </div>
-            </div>
-          </div>
+          )}
         </div>
 
-        {/* Stats Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-          <div className="bg-white dark:bg-zinc-800 rounded-lg border border-zinc-200 dark:border-zinc-700 p-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm text-zinc-600 dark:text-zinc-400">Present Days</p>
-                <p className="text-2xl font-bold text-zinc-900 dark:text-white">
-                  {employee.present_days}
-                </p>
-              </div>
-              <div className="w-10 h-10 bg-green-100 dark:bg-green-900 rounded-full flex items-center justify-center">
-                <span className="text-green-600 dark:text-green-400">✓</span>
-              </div>
-            </div>
-          </div>
+        {/* Main Identity Card */}
+        <Card className="rounded-[3rem] border-muted bg-background shadow-2xl shadow-primary/5 overflow-hidden relative">
+           <div className="absolute top-0 right-0 p-10 hidden xl:flex items-center gap-6">
+             <div className="space-y-4">
+               <Select value={selectedMonth.toString()} onValueChange={(v) => setSelectedMonth(parseInt(v))}>
+                  <SelectTrigger className="h-12 w-48 rounded-xl border-muted bg-muted/20 font-bold">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent className="rounded-xl border-muted">
+                    {months.map((m, i) => <SelectItem key={i} value={i.toString()}>{m}</SelectItem>)}
+                  </SelectContent>
+               </Select>
+               <Select value={selectedYear.toString()} onValueChange={(v) => setSelectedYear(parseInt(v))}>
+                  <SelectTrigger className="h-12 w-48 rounded-xl border-muted bg-muted/20 font-bold">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent className="rounded-xl border-muted">
+                    {years.map(y => <SelectItem key={y} value={y.toString()}>{y}</SelectItem>)}
+                  </SelectContent>
+               </Select>
+             </div>
+           </div>
 
-          <div className="bg-white dark:bg-zinc-800 rounded-lg border border-zinc-200 dark:border-zinc-700 p-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm text-zinc-600 dark:text-zinc-400">Total Days</p>
-                <p className="text-2xl font-bold text-zinc-900 dark:text-white">
-                  {employee.total_days}
-                </p>
-              </div>
-              <div className="w-10 h-10 bg-blue-100 dark:bg-blue-900 rounded-full flex items-center justify-center">
-                <span className="text-blue-600 dark:text-blue-400">📅</span>
-              </div>
-            </div>
-          </div>
-
-          <div className="bg-white dark:bg-zinc-800 rounded-lg border border-zinc-200 dark:border-zinc-700 p-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm text-zinc-600 dark:text-zinc-400">Attendance Rate</p>
-                <p className="text-2xl font-bold text-zinc-900 dark:text-white">
-                  {employee.attendance_rate}%
-                </p>
-              </div>
-              <div className="w-10 h-10 bg-purple-100 dark:bg-purple-900 rounded-full flex items-center justify-center">
-                <span className="text-purple-600 dark:text-purple-400">📊</span>
-              </div>
-            </div>
-          </div>
-
-          <div className="bg-white dark:bg-zinc-800 rounded-lg border border-zinc-200 dark:border-zinc-700 p-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm text-zinc-600 dark:text-zinc-400">Status</p>
-                <p className={`text-lg font-bold ${status.color.split(' ')[0]}`}>
-                  {status.label}
-                </p>
-              </div>
-              <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-purple-600 rounded-full flex items-center justify-center">
-                <span className="text-white font-bold text-sm">
-                  {employee.emp_code.slice(0, 2)}
-                </span>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        {/* Attendance Progress */}
-        <div className="bg-white dark:bg-zinc-800 rounded-lg border border-zinc-200 dark:border-zinc-700 p-6">
-          <h3 className="text-lg font-semibold text-zinc-900 dark:text-white mb-4">
-            Monthly Attendance Progress
-          </h3>
-          <div className="space-y-2">
-            <div className="flex justify-between text-sm">
-              <span className="text-zinc-600 dark:text-zinc-400">
-                {employee.present_days} of {employee.total_days} days present
-              </span>
-              <span className="text-zinc-900 dark:text-white font-medium">
-                {employee.attendance_rate}%
-              </span>
-            </div>
-            <div className="w-full bg-zinc-200 dark:bg-zinc-700 rounded-full h-3">
-              <div
-                className="bg-gradient-to-r from-blue-500 to-purple-600 h-3 rounded-full transition-all duration-500"
-                style={{ width: `${Math.min(employee.attendance_rate, 100)}%` }}
-              ></div>
-            </div>
-          </div>
-        </div>
-
-        {/* Recent Attendance Logs */}
-        <div className="bg-white dark:bg-zinc-800 rounded-lg border border-zinc-200 dark:border-zinc-700">
-          <div className="p-6 border-b border-zinc-200 dark:border-zinc-700">
-            <h3 className="text-lg font-semibold text-zinc-900 dark:text-white">
-              Attendance Logs - {months[selectedMonth]} {selectedYear}
-            </h3>
-            <p className="text-sm text-zinc-600 dark:text-zinc-400 mt-1">
-              {employee.recent_logs.length} attendance records found
-            </p>
-          </div>
-
-          <div className="divide-y divide-zinc-200 dark:divide-zinc-700">
-            {employee.recent_logs.length > 0 ? (
-              employee.recent_logs.map((log) => (
-                <div key={log.id} className="p-4 hover:bg-zinc-50 dark:hover:bg-zinc-800 transition-colors">
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-3">
-                      <div className="w-8 h-8 bg-green-100 dark:bg-green-900 rounded-full flex items-center justify-center">
-                        <span className="text-green-600 dark:text-green-400 text-sm">✓</span>
-                      </div>
-                      <div>
-                        <p className="font-medium text-zinc-900 dark:text-white">
-                          Attendance Recorded
-                        </p>
-                        <p className="text-sm text-zinc-600 dark:text-zinc-400">
-                          {formatDate(log.timestamp)}
-                        </p>
-                      </div>
+           <CardHeader className="p-10 md:p-14 border-b border-muted bg-muted/5">
+              <div className="flex flex-col md:flex-row items-start md:items-center gap-10">
+                <div className="w-32 h-32 rounded-[2.5rem] bg-primary flex items-center justify-center text-4xl font-black text-primary-foreground shadow-2xl shadow-primary/30 uppercase">
+                  {employee.name.slice(0, 2)}
+                </div>
+                
+                <div className="space-y-4 flex-1">
+                  <div>
+                    <div className="flex flex-wrap items-center gap-4">
+                      <h2 className="text-5xl font-black tracking-tighter text-foreground leading-none">
+                        {employee.name}
+                      </h2>
+                      {employee.is_archived && (
+                        <Badge className="bg-amber-500/20 text-amber-500 border-amber-500/30 px-4 py-1 font-black text-[10px] tracking-widest">
+                          <ShieldAlert className="w-3 h-3 mr-2" />
+                          ARCHIVED RECORD
+                        </Badge>
+                      )}
                     </div>
-                    <div className="text-right">
-                      <p className="text-sm text-zinc-600 dark:text-zinc-400">
-                        Log ID: {log.id}
-                      </p>
+                    <p className="text-xl font-medium text-muted-foreground mt-2 flex items-center gap-2">
+                       <Mail className="w-5 h-5 text-primary/50" />
+                       {employee.email}
+                    </p>
+                  </div>
+
+                  <div className="flex flex-wrap items-center gap-8 pt-2">
+                    <div className="flex items-center gap-3">
+                       <div className="w-10 h-10 rounded-xl bg-muted/50 flex items-center justify-center">
+                          <Fingerprint className="w-5 h-5 text-muted-foreground" />
+                       </div>
+                       <div>
+                          <p className="text-[10px] font-black text-muted-foreground uppercase tracking-widest">Employee Code</p>
+                          <p className="font-mono font-black text-lg text-primary">{employee.emp_code}</p>
+                       </div>
+                    </div>
+                    <div className="flex items-center gap-3">
+                       <div className="w-10 h-10 rounded-xl bg-muted/50 flex items-center justify-center">
+                          <Hash className="w-5 h-5 text-muted-foreground" />
+                       </div>
+                       <div>
+                          <p className="text-[10px] font-black text-muted-foreground uppercase tracking-widest">System Identifier</p>
+                          <p className="font-mono font-black text-lg">#{employee.user_id}</p>
+                       </div>
                     </div>
                   </div>
                 </div>
-              ))
-            ) : (
-              <div className="p-8 text-center">
-                <div className="w-12 h-12 bg-zinc-100 dark:bg-zinc-800 rounded-full flex items-center justify-center mx-auto mb-4">
-                  <span className="text-zinc-400">📅</span>
-                </div>
-                <p className="text-zinc-600 dark:text-zinc-400">
-                  No attendance records found for this month
-                </p>
               </div>
-            )}
-          </div>
+           </CardHeader>
+        </Card>
+
+        {/* Intelligence Grid */}
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
+           <Card className="rounded-[2.5rem] border-muted shadow-lg bg-background p-8 group hover:border-emerald-500/30 transition-all duration-500">
+              <div className="flex items-center justify-between mb-4">
+                 <div className="w-14 h-14 rounded-2xl bg-emerald-500/10 flex items-center justify-center text-emerald-500 group-hover:bg-emerald-500 group-hover:text-white transition-all">
+                    <CheckCircle2 className="w-7 h-7" />
+                 </div>
+                 <p className="text-[10px] font-black text-muted-foreground uppercase tracking-widest">Attendance</p>
+              </div>
+              <p className="text-4xl font-black">{employee.present_days}</p>
+              <p className="text-xs font-bold text-muted-foreground mt-1 lowercase">Log instances detected</p>
+           </Card>
+
+           <Card className="rounded-[2.5rem] border-muted shadow-lg bg-background p-8 group hover:border-blue-500/30 transition-all duration-500">
+              <div className="flex items-center justify-between mb-4">
+                 <div className="w-14 h-14 rounded-2xl bg-blue-500/10 flex items-center justify-center text-blue-500 group-hover:bg-blue-500 group-hover:text-white transition-all">
+                    <Calendar className="w-7 h-7" />
+                 </div>
+                 <p className="text-[10px] font-black text-muted-foreground uppercase tracking-widest">Cycle</p>
+              </div>
+              <p className="text-4xl font-black">{employee.total_days}</p>
+              <p className="text-xs font-bold text-muted-foreground mt-1 lowercase">Total operative days</p>
+           </Card>
+
+           <Card className="rounded-[2.5rem] border-muted shadow-lg bg-background p-8 group hover:border-primary/30 transition-all duration-500">
+              <div className="flex items-center justify-between mb-4">
+                 <div className="w-14 h-14 rounded-2xl bg-primary/10 flex items-center justify-center text-primary group-hover:bg-primary group-hover:text-white transition-all">
+                    <TrendingUp className="w-7 h-7" />
+                 </div>
+                 <p className="text-[10px] font-black text-muted-foreground uppercase tracking-widest">Efficiency</p>
+              </div>
+              <p className="text-4xl font-black">{employee.attendance_rate}%</p>
+              <p className="text-xs font-bold text-muted-foreground mt-1 lowercase">Sync rate reliability</p>
+           </Card>
+
+           <Card className={`rounded-[2.5rem] border-muted shadow-lg bg-background p-8 group hover:border-foreground/30 transition-all duration-500`}>
+              <div className="flex items-center justify-between mb-4">
+                 <div className={`w-14 h-14 rounded-2xl ${status.color.split(' ')[0]} flex items-center justify-center text-white`}>
+                    <ShieldAlert className="w-7 h-7" />
+                 </div>
+                 <p className="text-[10px] font-black text-muted-foreground uppercase tracking-widest">Status</p>
+              </div>
+              <p className="text-2xl font-black uppercase tracking-tighter">{status.label}</p>
+              <p className="text-xs font-bold text-muted-foreground mt-2 lowercase">Health classification</p>
+           </Card>
         </div>
+
+        {/* Progress Matrix */}
+        <Card className="rounded-[3rem] border-muted bg-muted/5 p-10">
+           <div className="flex items-center justify-between mb-8">
+              <h3 className="text-2xl font-black tracking-tight flex items-center gap-4">
+                 <div className="w-1.5 h-8 bg-primary rounded-full" />
+                 Engagement Matrix
+              </h3>
+              <p className="text-muted-foreground font-bold">{employee.attendance_rate}% OPTIMIZATION</p>
+           </div>
+           
+           <div className="relative pt-4">
+              <div className="w-full bg-muted border border-muted rounded-full h-4 overflow-hidden shadow-inner">
+                 <div
+                   className="bg-primary h-full transition-all duration-1000 ease-in-out shadow-[0_0_20px_rgba(var(--primary),0.5)]"
+                   style={{ width: `${Math.min(employee.attendance_rate, 100)}%` }}
+                 />
+              </div>
+              <div className="flex justify-between mt-4 text-[10px] font-black text-muted-foreground uppercase tracking-[0.2em]">
+                 <span>SYSTEM MIN (0%)</span>
+                 <span>NOMINAL (50%)</span>
+                 <span>ZENITH (100%)</span>
+              </div>
+           </div>
+        </Card>
+
+        {/* Telemetry Logs */}
+        <Card className="rounded-[3rem] border-muted overflow-hidden">
+           <CardHeader className="p-10 border-b border-muted bg-muted/20">
+              <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
+                 <div>
+                    <CardTitle className="text-2xl font-black tracking-tight">Telemetry Stream</CardTitle>
+                    <CardDescription className="text-muted-foreground font-bold mt-1 uppercase tracking-widest text-[10px]">
+                       Analyzing {months[selectedMonth]} {selectedYear} / {employee.recent_logs.length} Vectors Detected
+                    </CardDescription>
+                 </div>
+                 <div className="md:hidden flex gap-4">
+                    <Select value={selectedMonth.toString()} onValueChange={(v) => setSelectedMonth(parseInt(v))}>
+                        <SelectTrigger className="h-10 rounded-xl bg-background border-muted font-bold">
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {months.map((m, i) => <SelectItem key={i} value={i.toString()}>{m}</SelectItem>)}
+                        </SelectContent>
+                    </Select>
+                 </div>
+              </div>
+           </CardHeader>
+
+           <CardContent className="p-0">
+              <div className="divide-y divide-muted">
+                {employee.recent_logs.length > 0 ? (
+                  employee.recent_logs.map((log) => (
+                    <div key={log.id} className="p-8 hover:bg-muted/30 transition-all flex items-center justify-between group">
+                      <div className="flex items-center gap-6">
+                        <div className="w-12 h-12 rounded-2xl bg-primary/10 flex items-center justify-center text-primary group-hover:scale-110 transition-transform">
+                          <Clock className="w-6 h-6" />
+                        </div>
+                        <div>
+                          <p className="text-lg font-black text-foreground">Attendance Sequential Event</p>
+                          <p className="text-sm font-bold text-muted-foreground flex items-center gap-2 mt-1">
+                             <Calendar className="w-4 h-4" />
+                             {new Date(log.timestamp).toLocaleDateString("en-US", { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}
+                             <span className="mx-2 opacity-30">•</span>
+                             <Clock className="w-4 h-4" />
+                             {new Date(log.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' })}
+                          </p>
+                        </div>
+                      </div>
+                      <div className="text-right">
+                         <Badge variant="outline" className="rounded-lg font-black text-[10px] tracking-widest bg-muted/50 border-muted-foreground/20 text-muted-foreground px-4 py-2">
+                            VECTOR_ID: #{log.id}
+                         </Badge>
+                      </div>
+                    </div>
+                  ))
+                ) : (
+                  <div className="p-32 text-center text-muted-foreground">
+                    <div className="w-24 h-24 bg-muted/50 rounded-full flex items-center justify-center mx-auto mb-8 border border-muted">
+                      <AlertCircle className="w-10 h-10 opacity-20" />
+                    </div>
+                    <h4 className="text-2xl font-black tracking-tight mb-2">Null Vector Space</h4>
+                    <p className="font-medium text-lg opacity-70">No telemetry data detected within this chronal window.</p>
+                  </div>
+                )}
+              </div>
+           </CardContent>
+        </Card>
       </div>
 
       <EditEmployeeModal

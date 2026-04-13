@@ -15,8 +15,6 @@ import {
   AreaChart,
   Area,
   Cell,
-  PieChart,
-  Pie,
 } from "recharts";
 import {
   CalendarDays,
@@ -29,7 +27,12 @@ import {
   CheckCircle2,
   XCircle,
   Calendar,
-  ChevronRight
+  ChevronRight,
+  Zap,
+  Target,
+  Activity,
+  ArrowUpRight,
+  ArrowDownRight
 } from "lucide-react";
 import {
   startOfWeek,
@@ -43,9 +46,13 @@ import {
   isSameDay,
   parseISO,
   eachMonthOfInterval,
-  isSameMonth,
-  subDays
+  isSameMonth
 } from "date-fns";
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import { Skeleton } from "@/components/ui/skeleton";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 
 type Period = "week" | "month" | "year";
 
@@ -55,47 +62,6 @@ interface AttendanceLog {
   timestamp: string;
   check_type: number;
 }
-
-interface StatCardProps {
-  title: string;
-  value: string | number;
-  description: string;
-  icon: React.ReactNode;
-  trend?: {
-    value: number;
-    isUp: boolean;
-  };
-  color: "blue" | "green" | "purple" | "orange";
-}
-
-const StatCard = ({ title, value, description, icon, trend, color }: StatCardProps) => {
-  const colorClasses = {
-    blue: "bg-blue-50 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400 border-blue-100 dark:border-blue-800",
-    green: "bg-green-50 dark:bg-green-900/20 text-green-600 dark:text-green-400 border-green-100 dark:border-green-800",
-    purple: "bg-purple-50 dark:bg-purple-900/20 text-purple-600 dark:text-purple-400 border-purple-100 dark:border-purple-800",
-    orange: "bg-orange-50 dark:bg-orange-900/20 text-orange-600 dark:text-orange-400 border-orange-100 dark:border-orange-800",
-  };
-
-  return (
-    <div className="bg-white dark:bg-zinc-900 rounded-2xl border border-zinc-200 dark:border-zinc-800 p-6 flex flex-col gap-4 shadow-sm hover:shadow-md transition-shadow">
-      <div className="flex items-center justify-between">
-        <div className={`p-3 rounded-xl border ${colorClasses[color]}`}>
-          {icon}
-        </div>
-        {trend && (
-          <span className={`text-xs font-semibold px-2 py-1 rounded-full ${trend.isUp ? 'bg-green-100 text-green-700 dark:bg-green-900/40 dark:text-green-400' : 'bg-red-100 text-red-700 dark:bg-red-900/40 dark:text-red-400'}`}>
-            {trend.isUp ? '↑' : '↓'} {Math.abs(trend.value)}%
-          </span>
-        )}
-      </div>
-      <div>
-        <h3 className="text-zinc-500 dark:text-zinc-400 text-sm font-medium">{title}</h3>
-        <p className="text-3xl font-bold text-zinc-900 dark:text-white mt-1">{value}</p>
-        <p className="text-zinc-500 dark:text-zinc-400 text-xs mt-1">{description}</p>
-      </div>
-    </div>
-  );
-};
 
 export default function StatisticsPage() {
   const [period, setPeriod] = useState<Period>("month");
@@ -114,11 +80,9 @@ export default function StatisticsPage() {
       setLoading(true);
       setError(null);
 
-      // Load employees first
       const employees = await getAllEmployees();
       setEmployeeCount(employees.length);
 
-      // Calculate date range
       const now = new Date();
       let start: Date;
       let end: Date;
@@ -145,7 +109,7 @@ export default function StatisticsPage() {
       setLogs(data || []);
     } catch (err) {
       console.error("Error fetching statistics:", err);
-      setError("Failed to load statistics. Please try again later.");
+      setError("FAILED_TELEMETRY_EXTRACTION");
     } finally {
       setLoading(false);
     }
@@ -172,14 +136,12 @@ export default function StatisticsPage() {
         end: endOfMonth(now),
       });
     } else {
-      // For year, we might group by month instead
       intervalDay = eachDayOfInterval({
         start: startOfYear(now),
         end: endOfYear(now),
       });
     }
 
-    // Group logs by day
     const chartData = intervalDay.map(date => {
       const dayLogs = logs.filter(log => isSameDay(parseISO(log.timestamp), date));
       const presentIds = new Set(dayLogs.filter(l => l.check_type === 1).map(l => l.user_id));
@@ -193,7 +155,6 @@ export default function StatisticsPage() {
       };
     });
 
-    // If it's a year, group chartData by month for better visualization
     let displayChartData = chartData;
     if (period === "year") {
       const months = eachMonthOfInterval({
@@ -206,7 +167,6 @@ export default function StatisticsPage() {
           monthLogs.filter(l => l.check_type === 1).map(l => format(parseISO(l.timestamp), "yyyy-MM-dd"))
         );
         
-        // Average presence in that month
         const totalPresentInMonth = Array.from(uniquePresenceDays).reduce((acc, dateStr) => {
           const dailyLogs = monthLogs.filter(l => format(parseISO(l.timestamp), "yyyy-MM-dd") === dateStr);
           return acc + new Set(dailyLogs.filter(l => l.check_type === 1).map(l => l.user_id)).size;
@@ -230,285 +190,315 @@ export default function StatisticsPage() {
     return {
       displayChartData,
       totalCheckins,
-      attendanceRate: attendanceRate.toFixed(1),
+      attendanceRate: Math.round(attendanceRate),
       avgDailyPresent: Math.round(avgAttendance),
       activeEmployees: new Set(logs.map(l => l.user_id)).size
     };
   }, [logs, employeeCount, period, loading]);
 
   const periods: { id: Period; label: string; icon: any }[] = [
-    { id: "week", label: "This Week", icon: CalendarDays },
-    { id: "month", label: "This Month", icon: CalendarRange },
-    { id: "year", label: "This Year", icon: CalendarClock },
+    { id: "week", label: "PHASE: WEEK", icon: CalendarDays },
+    { id: "month", label: "PHASE: MONTH", icon: CalendarRange },
+    { id: "year", label: "PHASE: YEAR", icon: CalendarClock },
   ];
 
   return (
     <AppLayout>
-      <div className="space-y-8 pb-12">
+      <div className="space-y-12">
         {/* Header Section */}
-        <div className="flex flex-col md:flex-row md:items-end justify-between gap-6">
+        <div className="flex flex-col md:flex-row md:items-end justify-between gap-8">
           <div>
-            <h1 className="text-4xl font-extrabold text-zinc-900 dark:text-white tracking-tight">
-              Attendance Statistics
+             <div className="flex items-center gap-3 mb-2">
+                <Badge variant="outline" className="rounded-full border-primary/30 text-primary font-black text-[10px] tracking-widest px-4">SYSTEM ANALYTICS</Badge>
+                <div className="h-1 w-12 bg-primary/20 rounded-full" />
+             </div>
+            <h1 className="text-5xl font-extrabold text-foreground tracking-tighter">
+              Performance Matrix
             </h1>
-            <p className="text-zinc-500 dark:text-zinc-400 mt-2 text-lg">
-              Detailed insights and trends for employee attendance
+            <p className="text-muted-foreground mt-2 font-medium max-w-lg">
+              Advanced telemetry data processing for workforce optimization and attendance tracking.
             </p>
           </div>
 
-          <div className="flex bg-zinc-100 dark:bg-zinc-800/50 p-1 rounded-xl border border-zinc-200 dark:border-zinc-700">
+          <div className="flex bg-muted/30 p-1.5 rounded-2xl border border-muted backdrop-blur-xl">
             {periods.map((p) => (
-              <button
+              <Button
                 key={p.id}
                 onClick={() => setPeriod(p.id)}
-                className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-semibold transition-all duration-200 ${
+                variant="ghost"
+                className={`flex items-center gap-3 px-6 h-12 rounded-xl font-black text-[10px] tracking-widest transition-all duration-300 ${
                   period === p.id
-                    ? "bg-white dark:bg-zinc-700 text-blue-600 dark:text-blue-400 shadow-sm"
-                    : "text-zinc-600 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-zinc-200"
+                    ? "bg-primary text-primary-foreground shadow-xl shadow-primary/20"
+                    : "text-muted-foreground hover:bg-muted/50"
                 }`}
               >
-                <p.icon size={16} />
+                <p.icon className="w-4 h-4" />
                 {p.label}
-              </button>
+              </Button>
             ))}
           </div>
         </div>
 
         {loading ? (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 animate-pulse">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
             {[1, 2, 3, 4].map((i) => (
-              <div key={i} className="h-40 bg-zinc-100 dark:bg-zinc-800 rounded-2xl border border-zinc-200 dark:border-zinc-700" />
+              <Skeleton key={i} className="h-44 rounded-[2.5rem]" />
             ))}
           </div>
         ) : error ? (
-          <div className="p-8 text-center bg-red-50 dark:bg-red-900/10 border border-red-100 dark:border-red-900/30 rounded-2xl">
-            <XCircle className="mx-auto text-red-500 mb-4" size={48} />
-            <h3 className="text-lg font-bold text-zinc-900 dark:text-white">{error}</h3>
-            <button 
+          <Card className="border-destructive/50 bg-destructive/10 rounded-[2.5rem] p-12 text-center">
+            <XCircle className="mx-auto text-destructive mb-6 w-16 h-16 opacity-50" />
+            <h3 className="text-2xl font-black text-foreground">{error}</h3>
+            <Button 
               onClick={fetchData}
-              className="mt-4 px-6 py-2 bg-red-600 text-white rounded-xl hover:bg-red-700 transition-colors"
+              className="mt-6 h-12 px-8 rounded-xl font-black text-xs tracking-widest bg-destructive hover:bg-destructive/90"
             >
-              Try Again
-            </button>
-          </div>
+              RE-ATTEMPT SYNC
+            </Button>
+          </Card>
         ) : (
           <>
             {/* Stat Cards Grid */}
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-              <StatCard
-                title="Attendance Rate"
-                value={`${statsData?.attendanceRate}%`}
-                description="Avg. daily presence"
-                icon={<TrendingUp size={24} />}
-                color="green"
-                trend={{ value: 2.1, isUp: true }}
-              />
-              <StatCard
-                title="Total Check-ins"
-                value={statsData?.totalCheckins || 0}
-                description="For the selected period"
-                icon={<BarChart3 size={24} />}
-                color="blue"
-              />
-              <StatCard
-                title="Avg. Daily Present"
-                value={statsData?.avgDailyPresent || 0}
-                description={`Out of ${employeeCount} employees`}
-                icon={<Users size={24} />}
-                color="purple"
-              />
-              <StatCard
-                title="Active Employees"
-                value={statsData?.activeEmployees || 0}
-                description="Employees checked in"
-                icon={<Clock size={24} />}
-                color="orange"
-              />
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
+              <Card className="rounded-[2.5rem] border-muted shadow-xl bg-background p-8 relative overflow-hidden group">
+                 <div className="absolute top-0 right-0 p-8">
+                    <TrendingUp className="w-5 h-5 text-emerald-500 opacity-20 group-hover:opacity-100 transition-opacity" />
+                 </div>
+                 <div className="w-14 h-14 rounded-2xl bg-emerald-500/10 flex items-center justify-center text-emerald-500 mb-6 group-hover:bg-emerald-500 group-hover:text-white transition-all">
+                    <Target className="w-7 h-7" />
+                 </div>
+                 <p className="text-[10px] font-black text-muted-foreground uppercase tracking-widest mb-1">Efficiency Rate</p>
+                 <div className="flex items-end gap-3">
+                    <h3 className="text-4xl font-black tracking-tighter">{statsData?.attendanceRate}%</h3>
+                    <Badge className="mb-1 bg-emerald-500/20 text-emerald-600 border-none font-black text-[9px] tracking-tighter">
+                       <ArrowUpRight className="w-3 h-3 mr-1" />
+                       2.1%
+                    </Badge>
+                 </div>
+              </Card>
+
+              <Card className="rounded-[2.5rem] border-muted shadow-xl bg-background p-8 group overflow-hidden">
+                 <div className="w-14 h-14 rounded-2xl bg-primary/10 flex items-center justify-center text-primary mb-6 group-hover:bg-primary group-hover:text-white transition-all">
+                    <Activity className="w-7 h-7" />
+                 </div>
+                 <p className="text-[10px] font-black text-muted-foreground uppercase tracking-widest mb-1">Event Load</p>
+                 <h3 className="text-4xl font-black tracking-tighter">{statsData?.totalCheckins}</h3>
+                 <p className="text-[10px] font-bold text-muted-foreground mt-2 italic lowercase tracking-wide">Telemetry packets processed</p>
+              </Card>
+
+              <Card className="rounded-[2.5rem] border-muted shadow-xl bg-background p-8 group overflow-hidden">
+                 <div className="w-14 h-14 rounded-2xl bg-blue-500/10 flex items-center justify-center text-blue-500 mb-6 group-hover:bg-blue-500 group-hover:text-white transition-all">
+                    <Users className="w-7 h-7" />
+                 </div>
+                 <p className="text-[10px] font-black text-muted-foreground uppercase tracking-widest mb-1">Avg Presence</p>
+                 <h3 className="text-4xl font-black tracking-tighter">{statsData?.avgDailyPresent}</h3>
+                 <p className="text-[10px] font-bold text-muted-foreground mt-2 italic lowercase tracking-wide">Mean daily workforce sync</p>
+              </Card>
+
+              <Card className="rounded-[2.5rem] border-muted shadow-xl bg-background p-8 group overflow-hidden">
+                 <div className="w-14 h-14 rounded-2xl bg-purple-500/10 flex items-center justify-center text-purple-500 mb-6 group-hover:bg-purple-500 group-hover:text-white transition-all">
+                    <Zap className="w-7 h-7" />
+                 </div>
+                 <p className="text-[10px] font-black text-muted-foreground uppercase tracking-widest mb-1">Impact Group</p>
+                 <h3 className="text-4xl font-black tracking-tighter">{statsData?.activeEmployees}</h3>
+                 <p className="text-[10px] font-bold text-muted-foreground mt-2 italic lowercase tracking-wide">Core contributing personnel</p>
+              </Card>
             </div>
 
-            {/* Main Chart Section */}
+            {/* Visual Analytics */}
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-              <div className="lg:col-span-2 bg-white dark:bg-zinc-900 rounded-2xl border border-zinc-200 dark:border-zinc-800 p-8 shadow-sm">
-                <div className="flex items-center justify-between mb-8">
+              <Card className="lg:col-span-2 rounded-[3.5rem] border-muted bg-background shadow-2xl p-10">
+                <div className="flex items-center justify-between mb-12">
                   <div>
-                    <h2 className="text-xl font-bold text-zinc-900 dark:text-white flex items-center gap-2">
-                       Presence Trend
+                    <h2 className="text-3xl font-black tracking-tight flex items-center gap-4">
+                       <div className="w-1.5 h-8 bg-primary rounded-full shadow-[0_0_15px_rgba(var(--primary),0.5)]" />
+                       Strategic Trend
                     </h2>
-                    <p className="text-zinc-500 dark:text-zinc-400 text-sm mt-1">
-                      Daily overview of present employees
+                    <p className="text-muted-foreground font-bold text-xs uppercase tracking-widest mt-2">
+                      Volumetric analysis of personnel presence over time
                     </p>
                   </div>
-                  <div className="flex items-center gap-4 text-xs">
-                    <div className="flex items-center gap-1.5">
-                      <div className="w-3 h-3 rounded-full bg-blue-500" />
-                      <span className="text-zinc-600 dark:text-zinc-400">Present</span>
-                    </div>
-                    <div className="flex items-center gap-1.5">
-                      <div className="w-3 h-3 rounded-full bg-zinc-200 dark:bg-zinc-700" />
-                      <span className="text-zinc-600 dark:text-zinc-400">Absent</span>
+                  <div className="hidden sm:flex items-center gap-6">
+                    <div className="flex items-center gap-2">
+                      <div className="w-1.5 h-1.5 rounded-full bg-primary" />
+                      <span className="text-[9px] font-black text-muted-foreground uppercase tracking-widest">Presence Index</span>
                     </div>
                   </div>
                 </div>
 
-                <div className="h-[350px] w-full min-h-0 min-w-0">
+                <div className="h-[400px] w-full">
                   {isMounted && (
-                    <ResponsiveContainer width="100%" height="100%" minWidth={0}>
+                    <ResponsiveContainer width="100%" height="100%">
                     <AreaChart data={statsData?.displayChartData}>
                       <defs>
                         <linearGradient id="colorPresent" x1="0" y1="0" x2="0" y2="1">
-                          <stop offset="5%" stopColor="#3b82f6" stopOpacity={0.3}/>
-                          <stop offset="95%" stopColor="#3b82f6" stopOpacity={0}/>
+                          <stop offset="5%" stopColor="hsl(var(--primary))" stopOpacity={0.4}/>
+                          <stop offset="95%" stopColor="hsl(var(--primary))" stopOpacity={0}/>
                         </linearGradient>
                       </defs>
-                      <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e2e8f0" className="dark:stroke-zinc-800" />
+                      <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="hsl(var(--muted))" opacity={0.5} />
                       <XAxis 
                         dataKey="name" 
                         axisLine={false}
                         tickLine={false}
-                        tick={{ fill: '#94a3b8', fontSize: 12 }}
-                        dy={10}
+                        tick={{ fill: 'hsl(var(--muted-foreground))', fontSize: 10, fontWeight: 700 }}
+                        dy={15}
                       />
                       <YAxis 
                         axisLine={false}
                         tickLine={false}
-                        tick={{ fill: '#94a3b8', fontSize: 12 }}
-                        dx={-10}
+                        tick={{ fill: 'hsl(var(--muted-foreground))', fontSize: 10, fontWeight: 700 }}
+                        dx={-15}
                       />
                       <Tooltip 
                         contentStyle={{ 
-                          backgroundColor: '#fff', 
-                          borderRadius: '12px', 
-                          border: 'none', 
-                          boxShadow: '0 10px 15px -3px rgb(0 0 0 / 0.1)',
-                          color: '#000'
+                          backgroundColor: 'hsl(var(--background))', 
+                          borderRadius: '24px', 
+                          border: '1px solid hsl(var(--muted))', 
+                          boxShadow: '0 25px 50px -12px rgba(0,0,0,0.2)',
+                          padding: '20px'
                         }}
-                        itemStyle={{ color: '#3b82f6' }}
+                        itemStyle={{ color: 'hsl(var(--primary))', fontWeight: 900 }}
+                        labelStyle={{ fontWeight: 900, marginBottom: '8px', color: 'hsl(var(--foreground))' }}
                       />
                       <Area 
                         type="monotone" 
                         dataKey="present" 
-                        stroke="#3b82f6" 
-                        strokeWidth={4}
+                        stroke="hsl(var(--primary))" 
+                        strokeWidth={6}
                         fillOpacity={1} 
                         fill="url(#colorPresent)" 
-                        animationDuration={1500}
+                        animationDuration={2000}
+                        activeDot={{ r: 8, stroke: 'hsl(var(--background))', strokeWidth: 4 }}
                       />
                     </AreaChart>
                   </ResponsiveContainer>
                   )}
                 </div>
-              </div>
+              </Card>
 
-              {/* Distribution Chart */}
-              <div className="bg-white dark:bg-zinc-900 rounded-2xl border border-zinc-200 dark:border-zinc-800 p-8 shadow-sm">
-                <h2 className="text-xl font-bold text-zinc-900 dark:text-white mb-2">
-                  Daily Check-ins
+              <Card className="rounded-[3.5rem] border-muted bg-background shadow-2xl p-10 flex flex-col group">
+                <h2 className="text-2xl font-black tracking-tight mb-2 group-hover:text-primary transition-colors">
+                  Check-in Density
                 </h2>
-                <p className="text-zinc-500 dark:text-zinc-400 text-sm mb-8">
-                  Volume of activity
+                <p className="text-muted-foreground font-medium text-sm mb-10 lowercase italic">
+                  Intensity mapping of log activity
                 </p>
-                <div className="h-[300px] w-full mt-4 min-h-0 min-w-0">
+                <div className="flex-1 h-[250px] w-full mt-4">
                   {isMounted && (
-                    <ResponsiveContainer width="100%" height="100%" minWidth={0}>
-                    <BarChart data={statsData?.displayChartData?.slice(-10)}>
-                      <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e2e8f0" className="dark:stroke-zinc-800" />
+                    <ResponsiveContainer width="100%" height="100%">
+                    <BarChart data={statsData?.displayChartData?.slice(-7)}>
+                      <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="hsl(var(--muted))" opacity={0.3} />
                       <XAxis 
                         dataKey="name" 
                         axisLine={false}
                         tickLine={false}
-                        tick={{ fill: '#94a3b8', fontSize: 10 }}
+                        tick={{ fill: 'hsl(var(--muted-foreground))', fontSize: 9, fontWeight: 700 }}
                         dy={10}
                       />
                       <YAxis 
                         axisLine={false}
                         tickLine={false}
-                        tick={{ fill: '#94a3b8', fontSize: 12 }}
+                        tick={{ fill: 'hsl(var(--muted-foreground))', fontSize: 9, fontWeight: 700 }}
                       />
                       <Tooltip 
+                        cursor={{fill: 'hsl(var(--muted))', opacity: 0.1}}
                         contentStyle={{ 
-                          backgroundColor: '#fff', 
-                          borderRadius: '12px', 
-                          border: 'none', 
-                          boxShadow: '0 10px 15px -3px rgb(0 0 0 / 0.1)'
+                          backgroundColor: 'hsl(var(--background))', 
+                          borderRadius: '16px', 
+                          border: '1px solid hsl(var(--muted))',
+                          padding: '12px'
                         }}
                       />
                       <Bar 
                         dataKey="checkins" 
-                        fill="#3b82f6" 
-                        radius={[6, 6, 0, 0]} 
-                        animationDuration={2000}
+                        fill="hsl(var(--primary))" 
+                        radius={[12, 12, 0, 0]} 
+                        animationDuration={2500}
                       >
-                         {statsData?.displayChartData?.slice(-10).map((entry, index) => (
-                          <Cell key={`cell-${index}`} fill={index === 9 ? '#2563eb' : '#3b82f6'} fillOpacity={0.8} />
+                         {statsData?.displayChartData?.slice(-7).map((entry, index) => (
+                          <Cell key={`cell-${index}`} fillOpacity={0.4 + (index * 0.1)} />
                         ))}
                       </Bar>
                     </BarChart>
                   </ResponsiveContainer>
                   )}
                 </div>
-                <div className="mt-8 space-y-4">
-                  <div className="flex items-center justify-between p-3 rounded-xl bg-orange-50 dark:bg-orange-900/10 border border-orange-100 dark:border-orange-900/20">
-                    <div className="flex items-center gap-3">
-                      <Clock className="text-orange-500" size={18} />
-                      <span className="text-sm font-medium text-zinc-700 dark:text-zinc-300">Peak Hour</span>
-                    </div>
-                    <span className="text-sm font-bold text-orange-600">09:12 AM</span>
-                  </div>
-                  <div className="flex items-center justify-between p-3 rounded-xl bg-green-50 dark:bg-green-900/10 border border-green-100 dark:border-green-900/20">
-                    <div className="flex items-center gap-3">
-                      <CheckCircle2 className="text-green-500" size={18} />
-                      <span className="text-sm font-medium text-zinc-700 dark:text-zinc-300">Sync Status</span>
-                    </div>
-                    <span className="text-sm font-bold text-green-600">Healthy</span>
-                  </div>
+                <div className="mt-10 space-y-6">
+                   <div className="h-px bg-muted" />
+                   <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-4">
+                         <div className="w-10 h-10 rounded-xl bg-orange-500/10 flex items-center justify-center text-orange-500">
+                            <Clock className="w-5 h-5" />
+                         </div>
+                         <div>
+                            <p className="text-[10px] font-black text-muted-foreground uppercase tracking-widest">Peak Intensity</p>
+                            <p className="text-lg font-black tracking-tight">08:44 AM</p>
+                         </div>
+                      </div>
+                      <Badge variant="outline" className="h-8 rounded-lg font-black text-[9px] tracking-widest bg-emerald-500/10 text-emerald-500 border-none px-3">HEALTHY_SYNC</Badge>
+                   </div>
                 </div>
-              </div>
+              </Card>
             </div>
 
-            {/* Lower Summary List */}
-            <div className="bg-white dark:bg-zinc-900 rounded-2xl border border-zinc-200 dark:border-zinc-800 overflow-hidden shadow-sm">
-              <div className="px-8 py-6 border-b border-zinc-200 dark:border-zinc-800 flex items-center justify-between">
-                <div>
-                  <h2 className="text-xl font-bold text-zinc-900 dark:text-white">Recent Daily Breakdown</h2>
-                  <p className="text-zinc-500 dark:text-zinc-400 text-sm mt-1">Summary of the last few days in this period</p>
-                </div>
-                <button className="text-blue-600 dark:text-blue-400 text-sm font-semibold flex items-center gap-1 hover:underline">
-                  View Full History <ChevronRight size={16} />
-                </button>
-              </div>
-              <div className="overflow-x-auto">
-                <table className="w-full">
-                  <thead>
-                    <tr className="bg-zinc-50 dark:bg-zinc-800/50">
-                      <th className="px-8 py-4 text-left text-xs font-bold text-zinc-500 dark:text-zinc-400 uppercase tracking-wider">Date</th>
-                      <th className="px-8 py-4 text-left text-xs font-bold text-zinc-500 dark:text-zinc-400 uppercase tracking-wider">Present</th>
-                      <th className="px-8 py-4 text-left text-xs font-bold text-zinc-500 dark:text-zinc-400 uppercase tracking-wider">Absent</th>
-                      <th className="px-8 py-4 text-left text-xs font-bold text-zinc-500 dark:text-zinc-400 uppercase tracking-wider">Check-ins</th>
-                      <th className="px-8 py-4 text-left text-xs font-bold text-zinc-500 dark:text-zinc-400 uppercase tracking-wider">Status</th>
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y divide-zinc-200 dark:divide-zinc-800">
-                    {statsData?.displayChartData?.slice(-7).reverse().map((day, idx) => (
-                      <tr key={idx} className="hover:bg-zinc-50 dark:hover:bg-zinc-800/50 transition-colors">
-                        <td className="px-8 py-4 text-sm font-medium text-zinc-900 dark:text-white">{day.name}</td>
-                        <td className="px-8 py-4 text-sm text-green-600 dark:text-green-400 font-bold">{day.present}</td>
-                        <td className="px-8 py-4 text-sm text-red-500 dark:text-red-400 font-semibold">{day.absent}</td>
-                        <td className="px-8 py-4 text-sm text-zinc-600 dark:text-zinc-400">{day.checkins}</td>
-                        <td className="px-8 py-4 text-sm">
-                          <span className={`px-2.5 py-1 rounded-full text-xs font-bold ${
-                            day.present / employeeCount >= 0.8 
-                            ? 'bg-green-100 text-green-700 dark:bg-green-900/40 dark:text-green-400' 
-                            : 'bg-orange-100 text-orange-700 dark:bg-orange-900/40 dark:text-orange-400'
-                          }`}>
-                            {day.present / employeeCount >= 0.8 ? 'Excellent' : 'Average'}
-                          </span>
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-            </div>
+            {/* Deep Breakdown Table */}
+            <Card className="rounded-[3.5rem] border-muted bg-background shadow-2xl overflow-hidden">
+               <CardHeader className="p-12 border-b border-muted bg-muted/5 flex flex-row items-center justify-between">
+                  <div>
+                    <CardTitle className="text-3xl font-black tracking-tight">Granular Intelligence</CardTitle>
+                    <CardDescription className="text-muted-foreground font-bold mt-2 uppercase tracking-widest text-xs">
+                       Chronological event analysis matrix
+                    </CardDescription>
+                  </div>
+                  <Button variant="outline" className="h-12 rounded-xl border-muted bg-background hover:bg-muted/30 font-black text-[10px] tracking-widest">
+                     EXPORT_DATA.XLSX
+                     <ArrowDownRight className="w-4 h-4 ml-2" />
+                  </Button>
+               </CardHeader>
+               
+               <Table>
+                 <TableHeader className="bg-muted/20 border-b border-muted">
+                   <TableRow className="h-20 hover:bg-transparent">
+                     <TableHead className="px-12 font-black uppercase text-xs tracking-[0.2em]">Temporal Node</TableHead>
+                     <TableHead className="font-black uppercase text-xs tracking-[0.2em] text-emerald-500">Personnel Present</TableHead>
+                     <TableHead className="font-black uppercase text-xs tracking-[0.2em] text-destructive">Absence Nodes</TableHead>
+                     <TableHead className="font-black uppercase text-xs tracking-[0.2em]">Signal Events</TableHead>
+                     <TableHead className="px-12 font-black uppercase text-xs tracking-[0.2em] text-right">Reliability Index</TableHead>
+                   </TableRow>
+                 </TableHeader>
+                 <TableBody>
+                   {statsData?.displayChartData?.slice(-7).reverse().map((day, idx) => (
+                     <TableRow key={idx} className="h-24 hover:bg-muted/20 transition-all group">
+                       <TableCell className="px-12 font-black text-lg text-foreground group-hover:text-primary transition-colors">
+                          {day.name}
+                       </TableCell>
+                       <TableCell className="font-black text-xl text-emerald-600">
+                          {day.present}
+                       </TableCell>
+                       <TableCell className="font-bold text-muted-foreground/50">
+                          {day.absent}
+                       </TableCell>
+                       <TableCell className="font-medium text-muted-foreground">
+                          {day.checkins} Signals
+                       </TableCell>
+                       <TableCell className="px-12 text-right">
+                          <Badge 
+                            variant="outline" 
+                            className={`rounded-lg h-9 px-6 font-black text-[10px] tracking-widest border-none ${
+                              day.present / employeeCount >= 0.8 
+                              ? 'bg-emerald-500 text-white' 
+                              : 'bg-orange-500 text-white'
+                            }`}
+                          >
+                            {day.present / employeeCount >= 0.8 ? 'OPTIMAL' : 'DEVIATION'}
+                          </Badge>
+                       </TableCell>
+                     </TableRow>
+                   ))}
+                 </TableBody>
+               </Table>
+            </Card>
           </>
         )}
       </div>
