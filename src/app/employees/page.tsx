@@ -4,14 +4,12 @@ import { useState, useEffect, useMemo } from "react";
 import Link from "next/link";
 import { supabase } from "@/lib/supabase";
 import AppLayout from "@/components/AppLayout";
-import AddEmployeeModal from "@/components/AddEmployeeModal";
 import { getAllEmployees } from "@/lib/employees";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Input } from "@/components/ui/input";
-import { Button } from "@/components/ui/button";
-import { UserPlus, Search, Users, TrendingUp, AlertCircle } from "lucide-react";
+import { Search, Users, TrendingUp, AlertCircle } from "lucide-react";
 
 interface Employee {
   user_id: number;
@@ -33,7 +31,6 @@ export default function EmployeesPage() {
   const [employeeStats, setEmployeeStats] = useState<EmployeeStats[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
-  const [showAddModal, setShowAddModal] = useState(false);
 
   useEffect(() => {
     fetchEmployeeStats();
@@ -129,20 +126,13 @@ export default function EmployeesPage() {
           </div>
           
           <div className="flex items-center gap-4">
-             <Card className="bg-muted/30 border-none shadow-none px-6 py-2 flex items-center gap-4 rounded-2xl">
+              <Card className="bg-muted/30 border-none shadow-none px-6 py-2 flex items-center gap-4 rounded-2xl">
                 <Users className="w-5 h-5 text-primary" />
                 <div>
                    <p className="text-2xl font-black text-foreground leading-none">{employees.length}</p>
                    <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest mt-1">Personnel</p>
                 </div>
              </Card>
-             <Button 
-               onClick={() => setShowAddModal(true)}
-               className="h-14 px-8 rounded-2xl font-black text-sm uppercase tracking-wider bg-primary hover:bg-primary/90 shadow-lg shadow-primary/20"
-             >
-               <UserPlus className="w-5 h-5 mr-3" />
-               Join System
-             </Button>
           </div>
         </div>
 
@@ -262,14 +252,6 @@ export default function EmployeesPage() {
           </div>
         )}
       </div>
-
-      <AddEmployeeModal
-        isOpen={showAddModal}
-        onClose={() => setShowAddModal(false)}
-        onSuccess={() => {
-          fetchEmployeeStats();
-        }}
-      />
     </AppLayout>
   );
 }
