@@ -66,14 +66,8 @@ export default function Navbar({ onMenuToggle }: NavbarProps) {
             </Link>
           </div>
 
-          {/* Center: Search/Filter */}
-          <div className="hidden sm:flex flex-1 max-w-md">
-            <input
-              type="text"
-              placeholder="Filter/Search employees..."
-              className="w-full px-4 py-2 rounded-lg border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 text-zinc-900 dark:text-white placeholder-zinc-500 dark:placeholder-zinc-400 focus:outline-none focus:ring-2 focus:ring-blue-500"
-            />
-          </div>
+          {/* Center: Spacer */}
+          <div className="flex-1" />
 
           {/* Right: Options & User Profile */}
           <div className="flex items-center gap-4">
@@ -130,9 +124,6 @@ export default function Navbar({ onMenuToggle }: NavbarProps) {
                     <p className="text-sm font-semibold text-zinc-900 dark:text-white">
                       {user?.email}
                     </p>
-                    <p className="text-xs text-zinc-600 dark:text-zinc-400">
-                      {user?.admin ? "Administrator" : "User"}
-                    </p>
                   </div>
                   <button className="w-full text-left px-4 py-2 text-sm text-zinc-700 dark:text-zinc-300 hover:bg-zinc-100 dark:hover:bg-zinc-700 transition-colors">
                     Profile
@@ -149,14 +140,6 @@ export default function Navbar({ onMenuToggle }: NavbarProps) {
           </div>
         </div>
 
-        {/* Mobile Search */}
-        <div className="sm:hidden mt-4">
-          <input
-            type="text"
-            placeholder="Filter/Search..."
-            className="w-full px-4 py-2 rounded-lg border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 text-zinc-900 dark:text-white placeholder-zinc-500 text-sm"
-          />
-        </div>
       </div>
     </nav>
   );

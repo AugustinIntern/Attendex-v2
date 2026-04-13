@@ -3,6 +3,8 @@ import { supabase } from "./supabase";
 export interface EmployeeRecord {
   user_id: number;
   emp_code: string;
+  name?: string;
+  email?: string;
   is_archived?: boolean;
 }
 
@@ -10,6 +12,7 @@ export interface EmployeeRecord {
 let employeeCache: EmployeeRecord[] | null = null;
 let cacheTimestamp: number = 0;
 let codeMapCache: Map<number, string> | null = null;
+let nameMapCache: Map<number, string> | null = null;
 const CACHE_DURATION = 5 * 60 * 1000; // 5 minutes
 
 async function fetchEmployeeData(): Promise<EmployeeRecord[]> {
@@ -21,10 +24,10 @@ async function fetchEmployeeData(): Promise<EmployeeRecord[]> {
   try {
     let response = await supabase
       .from("user_mapping")
-      .select("user_id, emp_code, is_archived");
+      .select("user_id, emp_code, name, email, is_archived");
 
     if (response.error && response.error.code === '42703') {
-      console.warn("⚠️ COLUMN 'is_archived' MISSING: Please add it to 'user_mapping' table in Supabase. Falling back to active view.");
+      console.warn("⚠️ COLUMN 'name' or 'email' or 'is_archived' MISSING. Falling back.");
       response = await supabase
         .from("user_mapping")
         .select("user_id, emp_code");
@@ -37,7 +40,8 @@ async function fetchEmployeeData(): Promise<EmployeeRecord[]> {
 
     employeeCache = response.data || [];
     cacheTimestamp = Date.now();
-    codeMapCache = null; // Invalidate map cache
+    codeMapCache = null; // Invalidate caches
+    nameMapCache = null;
     return employeeCache;
   } catch (error) {
     console.error("Error in fetchEmployeeData:", error);
@@ -45,26 +49,32 @@ async function fetchEmployeeData(): Promise<EmployeeRecord[]> {
   }
 }
 
-// Build map for quick lookups
-async function getEmployeeMap(): Promise<Map<number, string>> {
-  if (codeMapCache) {
-    return codeMapCache;
+// Build maps for quick lookups
+async function getEmployeeMaps(): Promise<{ codeMap: Map<number, string>, nameMap: Map<number, string> }> {
+  if (codeMapCache && nameMapCache) {
+    return { codeMap: codeMapCache, nameMap: nameMapCache };
   }
 
   const employees = await fetchEmployeeData();
   codeMapCache = new Map<number, string>(
     employees.map((employee) => [employee.user_id, employee.emp_code])
   );
-  return codeMapCache;
+  nameMapCache = new Map<number, string>(
+    employees.map((employee) => [employee.user_id, employee.name || employee.emp_code])
+  );
+  return { codeMap: codeMapCache, nameMap: nameMapCache };
 }
 
 // Async versions
 export async function getEmployeeCode(userId: number): Promise<string> {
-  const employeeMap = await getEmployeeMap();
-  return employeeMap.get(userId) ?? `User ${userId}`;
+  const { codeMap } = await getEmployeeMaps();
+  return codeMap.get(userId) ?? `ID: ${userId}`;
 }
 
-// Removed getUserIdByIdx as we no longer use idx
+export async function getEmployeeName(userId: number): Promise<string> {
+  const { nameMap } = await getEmployeeMaps();
+  return nameMap.get(userId) ?? `User ${userId}`;
+}
 
 export async function getAllEmployees(): Promise<EmployeeRecord[]> {
   const employees = await fetchEmployeeData();
@@ -81,13 +91,15 @@ export async function getEmployeeCount(): Promise<number> {
   return employees.length;
 }
 
-// Sync versions for cached data (returns empty if not cached yet)
+// Sync versions for cached data
 export function getCachedEmployeeCode(userId: number): string {
-  if (!codeMapCache) {
-    // If no cache, return empty - component should load data first
-    return `User ${userId}`;
-  }
-  return codeMapCache.get(userId) ?? `User ${userId}`;
+  if (!codeMapCache) return `ID: ${userId}`;
+  return codeMapCache.get(userId) ?? `ID: ${userId}`;
+}
+
+export function getCachedEmployeeName(userId: number): string {
+  if (!nameMapCache) return `User ${userId}`;
+  return nameMapCache.get(userId) ?? `User ${userId}`;
 }
 
 export function getCachedEmployeeCount(): number {
@@ -96,6 +108,5 @@ export function getCachedEmployeeCount(): number {
 
 // Pre-load the cache on module import for server-side usage
 if (typeof window === "undefined") {
-  // Server-side only - pre-fetch data
   fetchEmployeeData().catch(err => console.error("Failed to pre-fetch employees:", err));
 }

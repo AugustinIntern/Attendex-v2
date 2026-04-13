@@ -8,6 +8,8 @@ import AppLayout from "@/components/AppLayout";
 interface Employee {
   user_id: number;
   emp_code: string;
+  name?: string;
+  email?: string;
   is_archived?: boolean;
 }
 
@@ -89,8 +91,9 @@ export default function ArchivedEmployeesPage() {
   const filteredEmployees = useMemo(() => {
     return employees.filter((employee) => {
       const empCode = (employee.emp_code ?? "").toLowerCase();
+      const name = (employee.name ?? "").toLowerCase();
       const searchLower = searchTerm.toLowerCase();
-      return empCode.includes(searchLower);
+      return empCode.includes(searchLower) || name.includes(searchLower);
     });
   }, [employees, searchTerm]);
 
@@ -129,7 +132,7 @@ export default function ArchivedEmployeesPage() {
           <div className="flex-1 max-w-md">
             <input
               type="text"
-              placeholder="Search archived employees by code..."
+              placeholder="Search archived employees by name or code..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
               className="w-full px-4 py-2 rounded-lg border border-zinc-300 dark:border-zinc-600 bg-white dark:bg-zinc-700 text-zinc-900 dark:text-white placeholder-zinc-500 dark:placeholder-zinc-400 focus:outline-none focus:ring-2 focus:ring-blue-500"
@@ -137,6 +140,7 @@ export default function ArchivedEmployeesPage() {
           </div>
         </div>
 
+        {/* Employee Cards Grid */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {filteredEmployees.map((employee) => {
             const stats = employeeStats.find(s => s.user_id === employee.user_id);
@@ -157,8 +161,8 @@ export default function ArchivedEmployeesPage() {
 
                   <div className="flex items-start justify-between mb-4 mt-2">
                     <div>
-                      <h3 className="text-lg font-semibold text-zinc-900 dark:text-white line-through decoration-zinc-400">
-                        {employee.emp_code || "N/A"}
+                      <h3 className="text-lg font-semibold text-zinc-900 dark:text-white line-through decoration-zinc-400 truncate" title={employee.name}>
+                        {employee.name || employee.emp_code || "N/A"}
                       </h3>
                       <p className="text-sm text-zinc-600 dark:text-zinc-400">
                         Employee ID: {employee.user_id}
@@ -166,7 +170,7 @@ export default function ArchivedEmployeesPage() {
                     </div>
                     <div className="w-12 h-12 bg-zinc-300 dark:bg-zinc-700 rounded-full flex items-center justify-center grayscale">
                       <span className="text-zinc-600 dark:text-zinc-300 font-bold text-sm">
-                        {(employee.emp_code ?? "??").slice(0, 2)}
+                        {(employee.name || employee.emp_code || "??").slice(0, 2)}
                       </span>
                     </div>
                   </div>

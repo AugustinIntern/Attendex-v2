@@ -17,6 +17,8 @@ interface AttendanceLog {
 interface EmployeeDetails {
   emp_code: string;
   user_id: number;
+  name: string;
+  email: string;
   is_archived?: boolean;
   total_days: number;
   present_days: number;
@@ -49,32 +51,23 @@ export default function EmployeeDetailPage() {
       setLoading(true);
 
       // Fetch employee from the database via the user_mapping table
-      const allEmployees = await getAllEmployees();
-      const employeeData = allEmployees.find((emp) => emp.user_id === userId);
+      const { data: mappingData, error: mappingError } = await supabase
+        .from("user_mapping")
+        .select("user_id, emp_code, name, email, is_archived")
+        .eq("user_id", userId)
+        .single();
       
-      // If not found in active, check archived (fallback for detail view)
-      let finalEmployeeData = employeeData;
-      if (!finalEmployeeData) {
-        const { data: archivedData } = await supabase
-          .from("user_mapping")
-          .select("user_id, emp_code, is_archived")
-          .eq("user_id", userId)
-          .single();
-        finalEmployeeData = archivedData;
-      }
-
-      if (!finalEmployeeData) {
+      if (mappingError || !mappingData) {
+        console.error("Employee not found:", mappingError);
         router.push("/employees");
         return;
       }
-
-      const empCode = finalEmployeeData.emp_code;
 
       // Get attendance logs for selected month
       const startOfMonth = new Date(selectedYear, selectedMonth, 1);
       const endOfMonth = new Date(selectedYear, selectedMonth + 1, 0);
 
-      const { data: logs, error } = await supabase
+      const { data: logs, error: logsError } = await supabase
         .from("attendance_logs")
         .select("*")
         .eq("user_id", userId)
@@ -82,8 +75,8 @@ export default function EmployeeDetailPage() {
         .lte("timestamp", endOfMonth.toISOString())
         .order("timestamp", { ascending: false });
 
-      if (error) {
-        console.error("Error fetching attendance logs:", error);
+      if (logsError) {
+        console.error("Error fetching attendance logs:", logsError);
         return;
       }
 
@@ -96,9 +89,11 @@ export default function EmployeeDetailPage() {
       const attendanceRate = totalDays > 0 ? (presentDays / totalDays) * 100 : 0;
 
       setEmployee({
-        emp_code: empCode,
+        emp_code: mappingData.emp_code,
+        name: mappingData.name || "N/A",
+        email: mappingData.email || "N/A",
         user_id: userId,
-        is_archived: finalEmployeeData.is_archived,
+        is_archived: mappingData.is_archived,
         total_days: totalDays,
         present_days: presentDays,
         attendance_rate: Math.round(attendanceRate * 100) / 100,
@@ -193,67 +188,58 @@ export default function EmployeeDetailPage() {
 
   return (
     <AppLayout>
-      <div className="space-y-6">
-        {/* Header */}
-        <div className="flex items-center justify-between">
+      <div className="space-y-8">
+        {/* Navigation & Actions */}
+        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
           <div className="flex items-center gap-4">
             <button
               onClick={() => router.push("/employees")}
-              className="p-2 rounded-lg hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors"
+              className="p-2.5 rounded-xl bg-white dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 hover:bg-zinc-100 dark:hover:bg-zinc-700 transition-all shadow-sm"
             >
-              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <svg className="w-5 h-5 text-zinc-600 dark:text-zinc-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
               </svg>
             </button>
-            <div>
-              <div className="flex items-center gap-2">
-                <h1 className="text-3xl font-bold text-zinc-900 dark:text-white">
-                  {employee.emp_code}
-                </h1>
-                {employee.is_archived && (
-                  <span className="px-2 py-1 text-xs font-bold uppercase tracking-wider text-amber-600 bg-amber-50 dark:bg-amber-900/30 border border-amber-200 dark:border-amber-800 rounded-md">
-                    Archived
-                  </span>
-                )}
-              </div>
-              <p className="text-zinc-600 dark:text-zinc-400 mt-1">
-                Employee ID: {employee.user_id}
-              </p>
-            </div>
+            <h2 className="text-sm font-medium text-zinc-500 dark:text-zinc-400">
+              Employee Profile
+            </h2>
           </div>
 
-          <div className="flex flex-col items-end gap-3">
-            <div className="flex items-center gap-2">
-              {!employee.is_archived && (
-                <>
-                  <button
-                    onClick={() => setShowEditModal(true)}
-                    className="px-4 py-2 bg-zinc-100 hover:bg-zinc-200 dark:bg-zinc-800 dark:hover:bg-zinc-700 text-zinc-900 dark:text-white text-sm font-medium rounded-lg transition-colors flex items-center gap-2"
-                  >
-                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
-                    </svg>
-                    Edit
-                  </button>
-                  <button
-                    onClick={() => setShowArchiveModal(true)}
-                    disabled={isArchiving}
-                    className="px-4 py-2 bg-amber-100 hover:bg-amber-200 dark:bg-amber-900/30 dark:hover:bg-red-900/50 text-amber-600 dark:text-amber-400 text-sm font-medium rounded-lg transition-colors flex items-center gap-2 disabled:opacity-50"
-                  >
-                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 8h14M5 8a2 2 0 110-4h14a2 2 0 110 4M5 8v10a2 2 0 002 2h10a2 2 0 002-2V8m-9 4h4" />
-                    </svg>
-                    {isArchiving ? "Archiving..." : "Archive"}
-                  </button>
-                </>
-              )}
-            </div>
-            
-            <div className="flex items-center gap-2">
-              <select
+          <div className="flex items-center gap-3">
+            {!employee.is_archived && (
+              <>
+                <button
+                  onClick={() => setShowEditModal(true)}
+                  className="px-5 py-2.5 bg-white dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 hover:bg-zinc-50 dark:hover:bg-zinc-700 text-zinc-900 dark:text-white text-sm font-semibold rounded-xl transition-all shadow-sm flex items-center gap-2"
+                >
+                  <svg className="w-4 h-4 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
+                  </svg>
+                  Edit Profile
+                </button>
+                <button
+                  onClick={() => setShowArchiveModal(true)}
+                  disabled={isArchiving}
+                  className="px-5 py-2.5 bg-amber-50 dark:bg-amber-900/10 border border-amber-200 dark:border-amber-900/20 hover:bg-amber-100 dark:hover:bg-amber-900/20 text-amber-600 dark:text-amber-400 text-sm font-semibold rounded-xl transition-all shadow-sm flex items-center gap-2 disabled:opacity-50"
+                >
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 8h14M5 8a2 2 0 110-4h14a2 2 0 110 4M5 8v10a2 2 0 002 2h10a2 2 0 002-2V8m-9 4h4" />
+                  </svg>
+                  {isArchiving ? "Archiving..." : "Archive"}
+                </button>
+              </>
+            )}
+          </div>
+        </div>
+
+        {/* Main Profile Header */}
+        <div className="bg-white dark:bg-zinc-900 rounded-3xl border border-zinc-200 dark:border-zinc-800 p-8 shadow-sm overflow-hidden relative">
+          <div className="absolute top-0 right-0 p-8">
+            <div className="flex items-center gap-4">
+               <select
                 value={selectedMonth}
                 onChange={(e) => setSelectedMonth(parseInt(e.target.value))}
-                className="px-3 py-1.5 text-sm rounded-lg border border-zinc-300 dark:border-zinc-600 bg-white dark:bg-zinc-700 text-zinc-900 dark:text-white"
+                className="px-4 py-2 text-sm font-medium rounded-xl border border-zinc-200 dark:border-zinc-700 bg-zinc-50 dark:bg-zinc-800 text-zinc-900 dark:text-white focus:ring-2 focus:ring-blue-500/20 outline-none transition-all"
               >
                 {months.map((month, index) => (
                   <option key={index} value={index}>{month}</option>
@@ -263,12 +249,55 @@ export default function EmployeeDetailPage() {
               <select
                 value={selectedYear}
                 onChange={(e) => setSelectedYear(parseInt(e.target.value))}
-                className="px-3 py-1.5 text-sm rounded-lg border border-zinc-300 dark:border-zinc-600 bg-white dark:bg-zinc-700 text-zinc-900 dark:text-white"
+                className="px-4 py-2 text-sm font-medium rounded-xl border border-zinc-200 dark:border-zinc-700 bg-zinc-50 dark:bg-zinc-800 text-zinc-900 dark:text-white focus:ring-2 focus:ring-blue-500/20 outline-none transition-all"
               >
                 {years.map((year) => (
                   <option key={year} value={year}>{year}</option>
                 ))}
               </select>
+            </div>
+          </div>
+
+          <div className="flex flex-col md:flex-row items-start gap-8">
+            <div className="w-24 h-24 rounded-3xl bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center text-3xl font-bold text-white shadow-lg shadow-blue-500/20 uppercase">
+              {employee.name.slice(0, 2)}
+            </div>
+            
+            <div className="flex-1 space-y-4">
+              <div>
+                <div className="flex items-center gap-3">
+                  <h1 className="text-4xl font-black text-zinc-900 dark:text-white tracking-tight">
+                    {employee.name}
+                  </h1>
+                  {employee.is_archived && (
+                    <span className="px-3 py-1 text-xs font-bold uppercase tracking-wider text-amber-600 bg-amber-50 dark:bg-amber-900/30 border border-amber-200 dark:border-amber-800 rounded-lg">
+                      Archived Account
+                    </span>
+                  )}
+                </div>
+                <p className="text-zinc-500 dark:text-zinc-400 font-medium text-lg mt-1">
+                  {employee.email}
+                </p>
+              </div>
+
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-6 pt-4">
+                <div>
+                  <p className="text-xs font-bold text-zinc-400 dark:text-zinc-500 uppercase tracking-widest">
+                    Employee Code
+                  </p>
+                  <p className="text-zinc-900 dark:text-white font-mono mt-1 pr-4 py-2 text-lg">
+                    {employee.emp_code}
+                  </p>
+                </div>
+                <div>
+                  <p className="text-xs font-bold text-zinc-400 dark:text-zinc-500 uppercase tracking-widest">
+                    System ID
+                  </p>
+                  <p className="text-zinc-900 dark:text-white font-mono mt-1 py-2 text-lg">
+                    #{employee.user_id}
+                  </p>
+                </div>
+              </div>
             </div>
           </div>
         </div>

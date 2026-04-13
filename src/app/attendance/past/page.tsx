@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { supabase } from "@/lib/supabase";
-import { getAllEmployees, getEmployeeCode } from "@/lib/employees";
+import { getAllEmployees, getEmployeeName } from "@/lib/employees";
 
 interface AttendanceLog {
   idx: number;
@@ -33,8 +33,8 @@ export default function PastDayPage() {
       // Build a userId -> emp_code map for display
       const codeMap = new Map<number, string>();
       employees.forEach((emp) => {
-        getEmployeeCode(emp.user_id).then((code) => {
-          codeMap.set(emp.user_id, code);
+        getEmployeeName(emp.user_id).then((name) => {
+          codeMap.set(emp.user_id, name);
           setEmployeeCodes(new Map(codeMap));
         });
       });

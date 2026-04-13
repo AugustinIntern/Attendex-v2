@@ -81,14 +81,14 @@ export async function GET(request: NextRequest) {
     // Get all employees from user_mapping table
     let { data, error } = await supabase
       .from("user_mapping")
-      .select("user_id, emp_code, is_archived")
+      .select("user_id, emp_code, name, email, is_archived")
       .order("user_id");
 
     if (error && error.code === '42703') {
       console.warn("is_archived column missing, falling back");
       const fallback = await supabase
         .from("user_mapping")
-        .select("user_id, emp_code")
+        .select("user_id, emp_code, name, email")
         .order("user_id");
       data = fallback.data as any; // Cast as any to avoid type mismatch on missing column
       error = fallback.error;
