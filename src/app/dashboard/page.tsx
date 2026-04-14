@@ -7,6 +7,7 @@ import { formatCompanyTime, formatCompanyDate, getCompanyLocalTime } from "@/lib
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
+import { Skeleton } from "@/components/ui/skeleton";
 import { CheckCircle2, XCircle, Clock } from "lucide-react";
 
 interface AttendanceLog {
