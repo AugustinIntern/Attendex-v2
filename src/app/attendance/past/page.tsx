@@ -228,11 +228,11 @@ export default function PastDayPage() {
               <Table>
                 <TableHeader className="bg-muted/50">
                   <TableRow>
-                    <TableHead className="px-10 font-black h-16 uppercase text-xs tracking-[0.2em]">Employee</TableHead>
-                    <TableHead className="font-black uppercase text-xs tracking-[0.2em]">ID</TableHead>
-                    <TableHead className="font-black uppercase text-xs tracking-[0.2em]">Time</TableHead>
-                    <TableHead className="font-black uppercase text-xs tracking-[0.2em]">Synthetic</TableHead>
-                    <TableHead className="px-10 font-black uppercase text-xs tracking-[0.2em] text-right">Status</TableHead>
+                    <TableHead className="px-10 font-black h-16 uppercase text-xs tracking-[0.2em] w-[35%]">Employee</TableHead>
+                    <TableHead className="font-black uppercase text-xs tracking-[0.2em] w-[15%]">ID</TableHead>
+                    <TableHead className="font-black uppercase text-xs tracking-[0.2em] w-[15%]">Time</TableHead>
+                    <TableHead className="font-black uppercase text-xs tracking-[0.2em] w-[15%]">Synthetic</TableHead>
+                    <TableHead className="px-10 font-black uppercase text-xs tracking-[0.2em] text-right w-[20%]">Status</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
