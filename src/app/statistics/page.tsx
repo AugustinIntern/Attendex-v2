@@ -101,7 +101,7 @@ export default function StatisticsPage() {
         .gte("timestamp", start.toISOString())
         .lte("timestamp", end.toISOString())
         .order("timestamp", { ascending: true })
-        .limit(5000);
+        .limit(50000); // Increased limit to ensure full year coverage for larger teams
 
       if (fetchError) throw fetchError;
       setLogs(data || []);
@@ -232,7 +232,7 @@ export default function StatisticsPage() {
         activeEmployees: 0
       };
     }
-  }, [logs, employeeCount, period, loading]);
+  }, [logs, employeeCount, period]); // Removed loading as dependency to prevent unnecessary recalculations during fetch transitions
 
   const periods: { id: Period; label: string; icon: any }[] = [
     { id: "week", label: "PHASE: WEEK", icon: CalendarDays },
