@@ -52,6 +52,7 @@ export default function PastDayPage() {
   const [editTime, setEditTime] = useState("");
   const [editSynthetic, setEditSynthetic] = useState("");
   const [isSaving, setIsSaving] = useState(false);
+  const [editDate, setEditDate] = useState("");
 
   useEffect(() => {
     // Load employee data on mount
@@ -122,10 +123,11 @@ export default function PastDayPage() {
   const presentCount = uniquePresentIds.size;
   const absenceCount = employeeCount - presentCount;
 
-  const handleEditClick = (log: AttendanceLog) => {
     const logDate = new Date(log.timestamp);
     const timeStr = format(logDate, "HH:mm");
+    const dateStr = format(logDate, "yyyy-MM-dd");
     setEditTime(timeStr);
+    setEditDate(dateStr);
     setEditSynthetic(log.device_ip === "synthetic" ? "Yes" : "No");
     setEditingLog(log);
   };
@@ -134,11 +136,13 @@ export default function PastDayPage() {
     if (!editingLog) return;
     setIsSaving(true);
     try {
-      // 1. Update time in timestamp
-      const originalDate = new Date(editingLog.timestamp);
+      // 1. Combine Date and Time into Timestamp
+      const [y, mon, d] = editDate.split("-").map(Number);
       const [h, m] = editTime.split(":").map(Number);
-      originalDate.setHours(h, m, 0, 0);
-      const newTimestamp = originalDate.toISOString();
+      
+      // Use the local Date construction to represent the chosen wall-clock time
+      const finalDate = new Date(y, mon - 1, d, h, m, 0);
+      const newTimestamp = finalDate.toISOString();
 
       // 2. Map synthetic to device_ip
       const newDeviceIp = editSynthetic === "Yes" ? "synthetic" : "192.168.68.52";
@@ -354,16 +358,30 @@ export default function PastDayPage() {
           </DialogHeader>
 
           <div className="space-y-8 py-6">
-            <div className="space-y-3">
-              <label className="text-[10px] font-black text-muted-foreground uppercase tracking-widest ml-1">Daily Timestamp</label>
-              <div className="relative">
-                <Clock className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-primary pointer-events-none" />
-                <Input 
-                  type="time" 
-                  value={editTime}
-                  onChange={(e) => setEditTime(e.target.value)}
-                  className="h-16 pl-14 rounded-2xl bg-muted/30 border-muted focus-visible:ring-primary font-bold text-lg"
-                />
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-3">
+                <label className="text-[10px] font-black text-muted-foreground uppercase tracking-widest ml-1">Log Date</label>
+                <div className="relative">
+                  <Calendar className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-primary pointer-events-none" />
+                  <Input 
+                    type="date" 
+                    value={editDate}
+                    onChange={(e) => setEditDate(e.target.value)}
+                    className="h-16 pl-14 rounded-2xl bg-muted/30 border-muted focus-visible:ring-primary font-bold text-sm"
+                  />
+                </div>
+              </div>
+              <div className="space-y-3">
+                <label className="text-[10px] font-black text-muted-foreground uppercase tracking-widest ml-1">Log Time</label>
+                <div className="relative">
+                  <Clock className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-primary pointer-events-none" />
+                  <Input 
+                    type="time" 
+                    value={editTime}
+                    onChange={(e) => setEditTime(e.target.value)}
+                    className="h-16 pl-14 rounded-2xl bg-muted/30 border-muted focus-visible:ring-primary font-bold text-lg"
+                  />
+                </div>
               </div>
             </div>
 
