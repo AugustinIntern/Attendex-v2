@@ -11,7 +11,19 @@ import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Calendar as CalendarComponent } from "@/components/ui/calendar";
-import { Calendar, CheckCircle2, XCircle, Clock } from "lucide-react";
+import { Calendar, CheckCircle2, XCircle, Clock, Edit2 } from "lucide-react";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter,
+  DialogDescription,
+} from "@/components/ui/dialog";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
+import { toast } from "sonner";
 
 interface AttendanceLog {
   idx: number;
@@ -34,6 +46,12 @@ export default function PastDayPage() {
   const [error, setError] = useState<string | null>(null);
   const [employeeCount, setEmployeeCount] = useState(0);
   const [employeeCodes, setEmployeeCodes] = useState<Map<number, string>>(new Map());
+  
+  // Edit State
+  const [editingLog, setEditingLog] = useState<AttendanceLog | null>(null);
+  const [editTime, setEditTime] = useState("");
+  const [editSynthetic, setEditSynthetic] = useState("");
+  const [isSaving, setIsSaving] = useState(false);
 
   useEffect(() => {
     // Load employee data on mount
@@ -103,6 +121,47 @@ export default function PastDayPage() {
   );
   const presentCount = uniquePresentIds.size;
   const absenceCount = employeeCount - presentCount;
+
+  const handleEditClick = (log: AttendanceLog) => {
+    const logDate = new Date(log.timestamp);
+    const timeStr = format(logDate, "HH:mm");
+    setEditTime(timeStr);
+    setEditSynthetic(log.device_ip === "synthetic" ? "Yes" : "No");
+    setEditingLog(log);
+  };
+
+  const handleSave = async () => {
+    if (!editingLog) return;
+    setIsSaving(true);
+    try {
+      // 1. Update time in timestamp
+      const originalDate = new Date(editingLog.timestamp);
+      const [h, m] = editTime.split(":").map(Number);
+      originalDate.setHours(h, m, 0, 0);
+      const newTimestamp = originalDate.toISOString();
+
+      // 2. Map synthetic to device_ip
+      const newDeviceIp = editSynthetic === "Yes" ? "synthetic" : "192.168.68.52";
+
+      const { error } = await supabase
+        .from("attendance_logs")
+        .update({
+          timestamp: newTimestamp,
+          device_ip: newDeviceIp
+        })
+        .eq("id", editingLog.id);
+
+      if (error) throw error;
+
+      toast.success("Log updated successfully");
+      setEditingLog(null);
+      fetchLogs(); // Refresh list
+    } catch (err: any) {
+      toast.error(err.message || "Failed to update log");
+    } finally {
+      setIsSaving(false);
+    }
+  };
 
   return (
     <div className="space-y-10">
@@ -239,7 +298,8 @@ export default function PastDayPage() {
                   {logs.map((log, index) => (
                     <TableRow
                       key={log.idx || index}
-                      className="hover:bg-muted/30 transition-colors"
+                      className="hover:bg-muted/30 transition-colors cursor-pointer group"
+                      onClick={() => handleEditClick(log)}
                     >
                       <TableCell className="px-10 py-6 font-bold">
                         <div className="flex items-center gap-4">
@@ -277,11 +337,68 @@ export default function PastDayPage() {
                     </TableRow>
                   ))}
                 </TableBody>
-              </Table>
+               </Table>
             </div>
           )}
         </CardContent>
       </Card>
+
+      {/* Edit Modal */}
+      <Dialog open={!!editingLog} onOpenChange={(open) => !open && setEditingLog(null)}>
+        <DialogContent className="rounded-[2.5rem] border-muted bg-background p-10 max-w-md shadow-2xl">
+          <DialogHeader>
+            <DialogTitle className="text-3xl font-black tracking-tight">Edit Attendance Log</DialogTitle>
+            <DialogDescription className="text-muted-foreground font-bold text-xs uppercase tracking-widest mt-2">
+              ID #{editingLog?.id} — {employeeCodes.get(editingLog?.user_id || 0) || `User ${editingLog?.user_id}`}
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="space-y-8 py-6">
+            <div className="space-y-3">
+              <label className="text-[10px] font-black text-muted-foreground uppercase tracking-widest ml-1">Daily Timestamp</label>
+              <div className="relative">
+                <Clock className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-primary pointer-events-none" />
+                <Input 
+                  type="time" 
+                  value={editTime}
+                  onChange={(e) => setEditTime(e.target.value)}
+                  className="h-16 pl-14 rounded-2xl bg-muted/30 border-muted focus-visible:ring-primary font-bold text-lg"
+                />
+              </div>
+            </div>
+
+            <div className="space-y-3">
+              <label className="text-[10px] font-black text-muted-foreground uppercase tracking-widest ml-1">Synthetic Record</label>
+              <Select value={editSynthetic} onValueChange={setEditSynthetic}>
+                <SelectTrigger className="h-16 rounded-2xl bg-muted/30 border-muted focus:ring-primary font-bold text-lg px-6">
+                  <SelectValue placeholder="Is synthetic?" />
+                </SelectTrigger>
+                <SelectContent className="rounded-2xl border-muted bg-background shadow-2xl">
+                  <SelectItem value="Yes" className="font-bold py-3 focus:bg-primary/10">Yes (System Generated)</SelectItem>
+                  <SelectItem value="No" className="font-bold py-3 focus:bg-primary/10">No (Physical Scan)</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+
+          <DialogFooter className="gap-4 flex-col sm:flex-row mt-4">
+            <Button 
+              variant="outline" 
+              onClick={() => setEditingLog(null)}
+              className="h-14 rounded-2xl font-black border-muted hover:bg-muted/30 px-8 order-2 sm:order-1"
+            >
+              CANCEL
+            </Button>
+            <Button 
+              onClick={handleSave}
+              disabled={isSaving}
+              className="h-14 rounded-2xl bg-primary hover:bg-primary/90 text-primary-foreground font-black px-10 shadow-lg shadow-primary/20 order-1 sm:order-2"
+            >
+              {isSaving ? "SAVING..." : "SAVE CHANGES"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
