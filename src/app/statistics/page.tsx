@@ -193,6 +193,7 @@ export default function StatisticsPage() {
 
           return {
             name: format(m, "MMM"),
+            fullDate: format(m, "yyyy-MM-dd"),
             present: avgPresent,
             absent: Math.max(0, employeeCount - avgPresent),
             checkins: monthLogs.filter(l => l.check_type === 1).length,
