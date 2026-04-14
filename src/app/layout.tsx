@@ -22,6 +22,9 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 export const metadata: Metadata = {
   title: "AttendEX - Attendance Management",
   description: "Attendance tracking and management system",
+  icons: {
+    icon: "/favicon.svg",
+  },
 };
 
 export default function RootLayout({
