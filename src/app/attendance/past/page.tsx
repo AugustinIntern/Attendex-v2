@@ -123,6 +123,7 @@ export default function PastDayPage() {
   const presentCount = uniquePresentIds.size;
   const absenceCount = employeeCount - presentCount;
 
+  const handleEditClick = (log: AttendanceLog) => {
     const logDate = new Date(log.timestamp);
     
     // Extract raw UTC values to avoid 4-hour browser offset
