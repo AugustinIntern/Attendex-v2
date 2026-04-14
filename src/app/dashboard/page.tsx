@@ -29,6 +29,7 @@ export default function DashboardPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [employeeCount, setEmployeeCount] = useState(0);
+  const [namesLoaded, setNamesLoaded] = useState(false);
 
   const fetchAttendanceLogs = useCallback(async () => {
     try {
@@ -38,6 +39,7 @@ export default function DashboardPage() {
       // Load employee data first
       const employees = await getAllEmployees();
       setEmployeeCount(employees.length);
+      setNamesLoaded(true);
       
 
 
@@ -207,9 +209,17 @@ export default function DashboardPage() {
                       <TableCell className="font-bold py-5">
                         <div className="flex items-center gap-3">
                            <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center text-primary font-black text-xs">
-                              {(getCachedEmployeeName(log.user_id) || "??").slice(0, 2).toUpperCase()}
+                              {namesLoaded ? (
+                                (getCachedEmployeeName(log.user_id) || "??").slice(0, 2).toUpperCase()
+                              ) : (
+                                <Skeleton className="w-4 h-4 rounded-full" />
+                              )}
                            </div>
-                           {getCachedEmployeeName(log.user_id)}
+                           {namesLoaded ? (
+                             getCachedEmployeeName(log.user_id)
+                           ) : (
+                             <Skeleton className="h-4 w-32" />
+                           )}
                         </div>
                       </TableCell>
                       <TableCell className="font-mono text-muted-foreground">
