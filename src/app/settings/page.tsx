@@ -188,87 +188,62 @@ export default function SettingsPage() {
                   </div>
                </CardContent>
             </Card>
- 
-            {/* Guide Section */}
-            <Card className="rounded-[3rem] border-muted bg-background shadow-2xl overflow-hidden group">
-               <CardHeader className="p-10 border-b border-muted bg-muted/5">
-                  <div className="flex items-center gap-6">
-                     <div className="w-16 h-16 rounded-3xl bg-amber-500/10 flex items-center justify-center">
-                        <HelpCircle className="text-amber-500 w-8 h-8" />
-                     </div>
-                     <div>
-                        <CardTitle className="text-3xl font-black tracking-tight">How to Add a New Employee</CardTitle>
-                        <CardDescription className="text-muted-foreground font-bold text-sm mt-1 uppercase tracking-widest">Onboarding Workflow</CardDescription>
-                     </div>
-                  </div>
-               </CardHeader>
-               <CardContent className="p-10">
-                  <div className="space-y-10">
-                     {[
-                        {
-                           step: "Step 1",
-                           title: "Setup Zoho Profile",
-                           desc: "Add the employee in Zoho People first, making sure their Employee ID is set correctly."
-                        },
-                        {
-                           step: "Step 2",
-                           title: "Synchronize Data",
-                           desc: "Come back to this app and click the \"Sync from Zoho People\" button. This will automatically create the employee in the system."
-                        },
-                        {
-                           step: "Step 3",
-                           title: "Verify Employee Record",
-                           desc: "Go to the Active Employees page to find the newly added employee and check their details."
-                        },
-                        {
-                           step: "Step 4",
-                           title: "Biometric Registration",
-                           desc: "Go to the employee's details page to get their Employee Code and User ID, then use these two values to register the employee on the biometric device."
-                        }
-                     ].map((item, i) => (
-                        <div key={i} className="flex gap-8 relative group/step">
-                           <div className="flex flex-col items-center shrink-0">
-                              <div className="w-12 h-12 rounded-2xl bg-muted border border-muted-foreground/10 flex items-center justify-center font-black text-xs text-muted-foreground group-hover/step:bg-primary group-hover/step:text-primary-foreground group-hover/step:border-primary transition-all duration-300">
-                                 {i + 1}
-                              </div>
-                              {i < 3 && <div className="w-px h-full bg-muted-foreground/10 mt-4 group-hover/step:bg-primary/30 transition-colors" />}
-                           </div>
-                           <div className="pb-4">
-                              <h4 className="text-[10px] font-black text-primary uppercase tracking-[0.2em] mb-2">{item.step}</h4>
-                              <h3 className="text-xl font-black text-foreground mb-2">{item.title}</h3>
-                              <p className="text-muted-foreground font-medium leading-relaxed max-w-2xl">{item.desc}</p>
-                           </div>
-                           <div className="ml-auto items-center hidden md:flex opacity-0 group-hover/step:opacity-100 transition-opacity">
-                              <ArrowRight className="w-5 h-5 text-primary" />
-                           </div>
-                        </div>
-                     ))}
-                  </div>
-               </CardContent>
-            </Card>
           </div>
 
           {/* Sidebar Area */}
           <div className="space-y-10">
-             <Card className="bg-background border-muted rounded-[2.5rem] p-10 text-foreground shadow-2xl shadow-primary/10 relative overflow-hidden group">
-                <div className="absolute -right-10 -bottom-10 w-40 h-40 bg-primary/20 rounded-full blur-[80px] group-hover:scale-150 transition-transform duration-1000" />
-                <h3 className="text-xl font-black tracking-tighter mb-10 flex items-center justify-between">
-                   System Info
-                   <Info className="w-5 h-5 opacity-30" />
-                </h3>
-                
-                <div className="space-y-8 relative">
-                   <div>
-                      <p className="text-muted-foreground text-[10px] font-black uppercase tracking-widest">Connections</p>
-                      <p className="text-2xl font-black mt-2">Database Connected</p>
-                      <div className="h-1 w-12 bg-primary mt-3 rounded-full" />
+             <Card className="bg-background border-muted rounded-[2.5rem] overflow-hidden shadow-2xl shadow-primary/10 group">
+                <CardHeader className="p-8 border-b border-muted bg-muted/5">
+                   <div className="flex items-center gap-4">
+                      <div className="w-12 h-12 rounded-2xl bg-amber-500/10 flex items-center justify-center">
+                         <HelpCircle className="text-amber-500 w-6 h-6" />
+                      </div>
+                      <div>
+                         <CardTitle className="text-xl font-black tracking-tight leading-tight">Add New Employee</CardTitle>
+                         <CardDescription className="text-muted-foreground font-black text-[9px] uppercase tracking-widest mt-0.5">Step-by-Step Guide</CardDescription>
+                      </div>
                    </div>
-                   <div>
-                      <p className="text-muted-foreground text-[10px] font-black uppercase tracking-widest">Schedule</p>
-                      <p className="text-2xl font-black mt-2">Manual Sync</p>
-                      <div className="h-1 w-12 bg-primary mt-3 rounded-full" />
+                </CardHeader>
+                <CardContent className="p-8">
+                   <div className="space-y-8">
+                      {[
+                         {
+                            step: "Step 1",
+                            title: "Zoho Setup",
+                            desc: "Add them in Zoho People first with a correct Employee ID."
+                         },
+                         {
+                            step: "Step 2",
+                            title: "Sync App",
+                            desc: "Click \"Start Sync\" here to import them automatically."
+                         },
+                         {
+                            step: "Step 3",
+                            title: "Verify",
+                            desc: "Check the Active Employees list to confirm the record."
+                         },
+                         {
+                            step: "Step 4",
+                            title: "Biometrics",
+                            desc: "Get their Code & User ID from the profile to register the device."
+                         }
+                      ].map((item, i) => (
+                         <div key={i} className="flex gap-5 relative group/step">
+                            <div className="flex flex-col items-center shrink-0">
+                               <div className="w-10 h-10 rounded-xl bg-muted border border-muted-foreground/10 flex items-center justify-center font-black text-[10px] text-muted-foreground group-hover/step:bg-primary group-hover/step:text-primary-foreground group-hover/step:border-primary transition-all duration-300">
+                                  {i + 1}
+                               </div>
+                               {i < 3 && <div className="w-px h-full bg-muted-foreground/10 mt-3 group-hover/step:bg-primary/30 transition-colors" />}
+                            </div>
+                            <div className="pb-2">
+                               <h4 className="text-[9px] font-black text-primary uppercase tracking-[0.2em] mb-1">{item.step}</h4>
+                               <h3 className="text-sm font-black text-foreground mb-1">{item.title}</h3>
+                               <p className="text-[11px] text-muted-foreground font-medium leading-relaxed">{item.desc}</p>
+                            </div>
+                         </div>
+                      ))}
                    </div>
-                </div>
+                </CardContent>
              </Card>
           </div>
         </div>
