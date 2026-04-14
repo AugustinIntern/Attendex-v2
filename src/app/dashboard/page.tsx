@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useState } from "react";
 import { supabase } from "@/lib/supabase";
-import { getAllEmployees, getCachedEmployeeName } from "@/lib/employees";
+import { getAllEmployees } from "@/lib/employees";
 import { formatCompanyTime, formatCompanyDate, getCompanyLocalTime } from "@/lib/utils";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
@@ -22,6 +22,10 @@ interface AttendanceLog {
   check_type: number;
   synthetic: boolean;
   paired_with: string | null;
+  user_mapping?: {
+    name: string;
+    emp_code: string;
+  };
 }
 
 export default function DashboardPage() {
@@ -51,7 +55,7 @@ export default function DashboardPage() {
 
       const { data, error: fetchError } = await supabase
         .from("attendance_logs")
-        .select("*")
+        .select("*, user_mapping(name, emp_code)")
         .gte("timestamp", todayStart)
         .lte("timestamp", todayEnd)
         .order("timestamp", { ascending: false })
@@ -207,13 +211,13 @@ export default function DashboardPage() {
                       <TableCell className="font-bold py-5">
                         <div className="flex items-center gap-3">
                            <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center text-primary font-black text-xs">
-                              {(getCachedEmployeeName(log.user_id) || "??").slice(0, 2).toUpperCase()}
+                              {(log.user_mapping?.name || "??").slice(0, 2).toUpperCase()}
                            </div>
-                           {getCachedEmployeeName(log.user_id)}
+                           {log.user_mapping?.name || "???"}
                         </div>
                       </TableCell>
                       <TableCell className="font-mono text-muted-foreground">
-                        {log.user_id}
+                        {log.user_mapping?.emp_code || log.user_id}
                       </TableCell>
                       <TableCell className="text-muted-foreground font-medium">
                         {formatCompanyTime(log.timestamp, true)}
