@@ -6,7 +6,7 @@ import { useAuth } from "@/lib/auth-context";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Menu, LogOut, ChevronDown, Zap } from "lucide-react";
+import { Menu, LogOut, ChevronDown } from "lucide-react";
 
 interface NavbarProps {
   onMenuToggle?: () => void;
@@ -50,16 +50,8 @@ export default function Navbar({ onMenuToggle }: NavbarProps) {
             </Button>
 
             <Link href="/dashboard" className="flex items-center gap-3 group">
-              <div className="w-9 h-9 bg-primary rounded-xl flex items-center justify-center shadow-lg shadow-primary/30 group-hover:scale-110 transition-transform">
-                <Zap className="w-5 h-5 text-primary-foreground" />
-              </div>
-              <div className="hidden sm:flex flex-col">
-                <span className="font-black text-base tracking-tighter text-foreground leading-none">
-                  AttendEX
-                </span>
-                <span className="text-[9px] font-bold text-muted-foreground uppercase tracking-[0.2em] leading-none mt-0.5">
-                  v2 SYSTEM
-                </span>
+              <div className="w-56 flex items-center justify-start group-hover:scale-105 transition-transform overflow-hidden">
+                <img src="/AttendEx_Logo.svg" alt="AttendEX Logo" className="w-full h-auto object-contain" />
               </div>
             </Link>
           </div>

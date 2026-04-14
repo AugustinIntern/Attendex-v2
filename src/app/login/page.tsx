@@ -8,7 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";
-import { Zap, Mail, Lock, Loader2, AlertCircle, ShieldCheck } from "lucide-react";
+import { Mail, Lock, Loader2, AlertCircle, ShieldCheck } from "lucide-react";
 
 export default function LoginPage() {
   const router = useRouter();
@@ -43,20 +43,11 @@ export default function LoginPage() {
       <div className="w-full max-w-md relative z-10">
         {/* Logo & Title */}
         <div className="text-center mb-10">
-          <div className="flex justify-center mb-6">
-            <div className="w-20 h-20 bg-primary rounded-3xl flex items-center justify-center shadow-2xl shadow-primary/30">
-              <Zap className="w-10 h-10 text-primary-foreground" />
+          <div className="flex justify-center mb-10">
+            <div className="w-96 flex items-center justify-center group">
+              <img src="/AttendEx_Logo.svg" alt="AttendEX Logo" className="w-full h-auto object-contain" />
             </div>
           </div>
-          <h1 className="text-5xl font-extrabold text-foreground tracking-tighter mb-2">
-            AttendEX
-          </h1>
-          <p className="text-muted-foreground font-medium">
-            Attendance Intelligence Platform
-          </p>
-          <Badge variant="outline" className="mt-3 border-primary/30 text-primary font-black text-[9px] tracking-widest rounded-full px-4 bg-primary/5">
-            SYSTEM v2.0
-          </Badge>
         </div>
 
         {/* Login Card */}
