@@ -4,11 +4,11 @@ import { useState, useEffect, useMemo } from "react";
 import Link from "next/link";
 import { supabase } from "@/lib/supabase";
 import AppLayout from "@/components/AppLayout";
-import { getAllEmployees } from "@/lib/employees";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Input } from "@/components/ui/input";
+import { formatCompanyDate } from "@/lib/utils";
 import { Search, Users, TrendingUp, AlertCircle } from "lucide-react";
 
 interface Employee {
@@ -61,7 +61,8 @@ export default function EmployeesPage() {
         .from("attendance_logs")
         .select("user_id, timestamp")
         .gte("timestamp", startOfMonth.toISOString())
-        .lte("timestamp", endOfMonth.toISOString());
+        .lte("timestamp", endOfMonth.toISOString())
+        .limit(10000);
 
       if (error) {
         console.error("Error fetching attendance logs:", error);
@@ -74,7 +75,7 @@ export default function EmployeesPage() {
           ? logs.filter((log) => log.user_id === userId)
           : [];
         const uniqueDays = new Set(
-          employeeLogs.map((log) => new Date(log.timestamp).toDateString())
+          employeeLogs.map((log) => formatCompanyDate(log.timestamp))
         );
         const presentDays = uniqueDays.size;
         const totalDays = Math.min(now.getDate(), 31);
@@ -124,21 +125,21 @@ export default function EmployeesPage() {
               Real-time monitoring and administrative management of personnel.
             </p>
           </div>
-          
+
           <div className="flex items-center gap-4">
-              <Card className="bg-muted/30 border-none shadow-none px-6 py-2 flex items-center gap-4 rounded-2xl">
-                <Users className="w-5 h-5 text-primary" />
-                <div>
-                   <p className="text-2xl font-black text-foreground leading-none">{employees.length}</p>
-                   <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest mt-1">Personnel</p>
-                </div>
-             </Card>
+            <Card className="bg-muted/30 border-none shadow-none px-6 py-2 flex items-center gap-4 rounded-2xl">
+              <Users className="w-5 h-5 text-primary" />
+              <div>
+                <p className="text-2xl font-black text-foreground leading-none">{employees.length}</p>
+                <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest mt-1">Personnel</p>
+              </div>
+            </Card>
           </div>
         </div>
 
         <div className="relative group max-w-2xl">
-           <Search className="absolute left-5 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground group-focus-within:text-primary transition-colors" />
-           <Input
+          <Search className="absolute left-5 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground group-focus-within:text-primary transition-colors" />
+          <Input
             type="text"
             placeholder="Identity scan..."
             value={searchTerm}
@@ -161,7 +162,7 @@ export default function EmployeesPage() {
                   </div>
                 </CardHeader>
                 <CardContent className="p-8">
-                   <Skeleton className="h-20 w-full rounded-2xl" />
+                  <Skeleton className="h-20 w-full rounded-2xl" />
                 </CardContent>
               </Card>
             ))
@@ -176,62 +177,62 @@ export default function EmployeesPage() {
                 className="group block"
               >
                 <Card className="rounded-[2.5rem] border-muted bg-background hover:bg-muted/5 group-hover:border-primary/50 transition-all duration-500 overflow-hidden relative">
-                   <div className="absolute top-0 right-0 p-8">
-                      <TrendingUp className="w-5 h-5 text-muted-foreground opacity-20 group-hover:text-primary group-hover:opacity-100 transition-all" />
-                   </div>
-                   <CardHeader className="p-8 pb-4">
-                      <div className="flex items-start justify-between">
-                        <div className="max-w-[70%]">
-                           <p className="text-[10px] font-black text-muted-foreground uppercase tracking-[0.2em] mb-1">ID: {employee.user_id}</p>
-                           <CardTitle className="text-xl font-black truncate leading-tight">
-                              {employee.name || employee.emp_code}
-                           </CardTitle>
+                  <div className="absolute top-0 right-0 p-8">
+                    <TrendingUp className="w-5 h-5 text-muted-foreground opacity-20 group-hover:text-primary group-hover:opacity-100 transition-all" />
+                  </div>
+                  <CardHeader className="p-8 pb-4">
+                    <div className="flex items-start justify-between">
+                      <div className="max-w-[70%]">
+                        <p className="text-[10px] font-black text-muted-foreground uppercase tracking-[0.2em] mb-1">ID: {employee.user_id}</p>
+                        <CardTitle className="text-xl font-black truncate leading-tight">
+                          {employee.name || employee.emp_code}
+                        </CardTitle>
+                      </div>
+                      <div className="w-14 h-14 bg-primary/10 rounded-2xl flex items-center justify-center group-hover:bg-primary group-hover:scale-110 transition-all duration-500">
+                        <span className="text-primary font-black text-sm group-hover:text-primary-foreground">
+                          {(employee.name || employee.emp_code || "??").slice(0, 2).toUpperCase()}
+                        </span>
+                      </div>
+                    </div>
+                  </CardHeader>
+
+                  <CardContent className="p-8 pt-0">
+                    {stats ? (
+                      <div className="space-y-6">
+                        <div className="flex justify-between items-center bg-muted/30 p-3 rounded-xl">
+                          <span className="text-[10px] font-black text-muted-foreground uppercase tracking-widest pl-2">Reliability</span>
+                          <Badge className={`rounded-lg font-black text-[10px] tracking-widest border-none ${status?.color} text-white`}>
+                            {status?.label}
+                          </Badge>
                         </div>
-                        <div className="w-14 h-14 bg-primary/10 rounded-2xl flex items-center justify-center group-hover:bg-primary group-hover:scale-110 transition-all duration-500">
-                          <span className="text-primary font-black text-sm group-hover:text-primary-foreground">
-                            {(employee.name || employee.emp_code || "??").slice(0, 2).toUpperCase()}
-                          </span>
+
+                        <div className="grid grid-cols-2 gap-4">
+                          <div className="bg-muted/10 p-4 rounded-2xl text-center">
+                            <p className="text-2xl font-black">{stats.present_days}</p>
+                            <p className="text-[9px] font-bold text-muted-foreground uppercase tracking-widest mt-1">Days Logs</p>
+                          </div>
+                          <div className="bg-muted/10 p-4 rounded-2xl text-center">
+                            <p className="text-2xl font-black">{Math.round(stats.attendance_rate)}%</p>
+                            <p className="text-[9px] font-bold text-muted-foreground uppercase tracking-widest mt-1">Duty Sync</p>
+                          </div>
+                        </div>
+
+                        <div className="relative pt-2">
+                          <div className="w-full bg-muted/30 rounded-full h-1.5 overflow-hidden">
+                            <div
+                              className="bg-primary h-full transition-all duration-1000 ease-out"
+                              style={{ width: `${Math.min(stats.attendance_rate, 100)}%` }}
+                            />
+                          </div>
                         </div>
                       </div>
-                   </CardHeader>
-
-                   <CardContent className="p-8 pt-0">
-                     {stats ? (
-                       <div className="space-y-6">
-                         <div className="flex justify-between items-center bg-muted/30 p-3 rounded-xl">
-                            <span className="text-[10px] font-black text-muted-foreground uppercase tracking-widest pl-2">Reliability</span>
-                            <Badge className={`rounded-lg font-black text-[10px] tracking-widest border-none ${status?.color} text-white`}>
-                               {status?.label}
-                            </Badge>
-                         </div>
-
-                         <div className="grid grid-cols-2 gap-4">
-                            <div className="bg-muted/10 p-4 rounded-2xl text-center">
-                               <p className="text-2xl font-black">{stats.present_days}</p>
-                               <p className="text-[9px] font-bold text-muted-foreground uppercase tracking-widest mt-1">Days Logs</p>
-                            </div>
-                            <div className="bg-muted/10 p-4 rounded-2xl text-center">
-                               <p className="text-2xl font-black">{Math.round(stats.attendance_rate)}%</p>
-                               <p className="text-[9px] font-bold text-muted-foreground uppercase tracking-widest mt-1">Duty Sync</p>
-                            </div>
-                         </div>
-
-                         <div className="relative pt-2">
-                            <div className="w-full bg-muted/30 rounded-full h-1.5 overflow-hidden">
-                               <div
-                                 className="bg-primary h-full transition-all duration-1000 ease-out"
-                                 style={{ width: `${Math.min(stats.attendance_rate, 100)}%` }}
-                               />
-                            </div>
-                         </div>
-                       </div>
-                     ) : (
-                       <div className="p-8 text-center bg-muted/10 rounded-[1.5rem] border border-dashed border-muted">
-                          <AlertCircle className="w-6 h-6 text-muted-foreground/30 mx-auto mb-2" />
-                          <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest">Awaiting Logs</p>
-                       </div>
-                     )}
-                   </CardContent>
+                    ) : (
+                      <div className="p-8 text-center bg-muted/10 rounded-[1.5rem] border border-dashed border-muted">
+                        <AlertCircle className="w-6 h-6 text-muted-foreground/30 mx-auto mb-2" />
+                        <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest">Awaiting Logs</p>
+                      </div>
+                    )}
+                  </CardContent>
                 </Card>
               </Link>
             );
@@ -241,7 +242,7 @@ export default function EmployeesPage() {
         {filteredEmployees.length === 0 && !loading && (
           <div className="text-center py-20 bg-muted/10 rounded-[3rem] border-2 border-dashed border-muted">
             <div className="w-20 h-20 bg-muted rounded-full flex items-center justify-center mx-auto mb-6">
-               <Search className="w-10 h-10 opacity-20" />
+              <Search className="w-10 h-10 opacity-20" />
             </div>
             <h3 className="text-2xl font-black tracking-tight mb-2">
               Identity Mismatch

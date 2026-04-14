@@ -1,13 +1,16 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useState } from "react";
+import { format } from "date-fns";
 import { supabase } from "@/lib/supabase";
 import { getAllEmployees, getEmployeeName } from "@/lib/employees";
+import { formatCompanyTime } from "@/lib/utils";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Input } from "@/components/ui/input";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Calendar as CalendarComponent } from "@/components/ui/calendar";
 import { Calendar, CheckCircle2, XCircle, Clock } from "lucide-react";
 
 interface AttendanceLog {
@@ -49,7 +52,7 @@ export default function PastDayPage() {
 
   const formattedDateLabel = useMemo(() => {
     if (!selectedDate) return "No Selection";
-    return new Date(selectedDate).toLocaleDateString("en-US", {
+    return new Date(`${selectedDate}T12:00:00`).toLocaleDateString("en-US", {
       weekday: "long",
       year: "numeric",
       month: "long",
@@ -113,19 +116,29 @@ export default function PastDayPage() {
           </p>
         </div>
 
-        <div className="flex bg-muted/50 p-1.5 rounded-2xl border border-muted w-full md:w-auto">
-           <div className="flex items-center gap-3 px-4">
-              <Calendar className="w-5 h-5 text-primary" />
-              <div className="h-8 w-px bg-muted" />
-           </div>
-           <Input
-            type="date"
-            className="border-0 bg-transparent shadow-none focus-visible:ring-0 text-lg font-black h-12 w-full"
-            value={selectedDate}
-            onChange={(event) => setSelectedDate(event.target.value)}
-            max={new Date().toISOString().split("T")[0]}
-          />
-        </div>
+        <Popover>
+          <PopoverTrigger asChild>
+            <button className="flex bg-muted/50 p-1.5 rounded-2xl border border-muted w-full md:w-auto items-center hover:bg-muted/70 transition-colors focus:outline-none cursor-pointer">
+              <div className="flex items-center gap-3 px-4">
+                <Calendar className="w-5 h-5 text-primary" />
+                <div className="h-8 w-px bg-muted" />
+              </div>
+              <div className="flex items-center justify-between w-full md:w-[200px] h-12 px-2 shadow-none text-lg font-black text-left">
+                {selectedDate ? format(new Date(`${selectedDate}T12:00:00`), "MMM dd, yyyy") : <span className="opacity-50">Select date...</span>}
+              </div>
+            </button>
+          </PopoverTrigger>
+          <PopoverContent className="w-auto p-0 rounded-3xl overflow-hidden border-muted shadow-2xl" align="end">
+            <CalendarComponent
+              mode="single"
+              selected={selectedDate ? new Date(`${selectedDate}T12:00:00`) : undefined}
+              onSelect={(date) => setSelectedDate(date ? format(date, "yyyy-MM-dd") : "")}
+              disabled={(date) => date > new Date()}
+              initialFocus
+              className="bg-background text-foreground"
+            />
+          </PopoverContent>
+        </Popover>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
@@ -135,7 +148,7 @@ export default function PastDayPage() {
               <h2 className="text-3xl font-black text-foreground">{formattedDateLabel}</h2>
               <p className="text-muted-foreground mt-4 font-medium italic">
                 {selectedDate
-                  ? `Extraction complete for ${new Date(selectedDate).toLocaleDateString()}`
+                  ? `Extraction complete for ${new Date(`${selectedDate}T12:00:00`).toLocaleDateString()}`
                   : "Standby for date selection..."}
               </p>
            </CardContent>
@@ -208,7 +221,7 @@ export default function PastDayPage() {
                   <Clock className="w-10 h-10 opacity-20" />
                </div>
               <p className="font-bold text-lg">Zero Records Found</p>
-              <p className="mt-1 opacity-70">No telemetry data was logged for {new Date(selectedDate).toLocaleDateString()}.</p>
+              <p className="mt-1 opacity-70">No telemetry data was logged for {new Date(`${selectedDate}T12:00:00`).toLocaleDateString()}.</p>
             </div>
           ) : (
             <div className="overflow-x-auto">
@@ -239,7 +252,7 @@ export default function PastDayPage() {
                         {log.user_id}
                       </TableCell>
                       <TableCell className="text-muted-foreground font-semibold">
-                        {new Date(log.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                        {formatCompanyTime(log.timestamp)}
                       </TableCell>
                       <TableCell className="px-10 text-right">
                         <Badge

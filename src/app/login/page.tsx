@@ -70,8 +70,8 @@ export default function LoginPage() {
             </CardDescription>
           </CardHeader>
 
-          <CardContent className="px-10 pb-10">
-            <form onSubmit={handleSubmit} className="space-y-6">
+          <CardContent className="px-10 pb-12">
+            <form onSubmit={handleSubmit} className="space-y-8">
               <div className="space-y-2">
                 <label htmlFor="email" className="flex items-center gap-2 text-xs font-black text-muted-foreground uppercase tracking-[0.2em]">
                   <Mail className="w-4 h-4 text-primary" />
@@ -132,26 +132,7 @@ export default function LoginPage() {
               </Button>
             </form>
 
-            {/* Demo Credentials */}
-            <div className="mt-8 p-5 rounded-2xl bg-muted/30 border border-muted">
-              <p className="text-[10px] font-black text-muted-foreground uppercase tracking-[0.2em] mb-3">
-                Demo Credentials
-              </p>
-              <div className="space-y-2 font-mono text-xs">
-                <div className="flex items-center gap-2 text-muted-foreground">
-                  <div className="w-1.5 h-1.5 rounded-full bg-primary/50" />
-                  <span>augustin.mbx@gmail.com / bradley2k19</span>
-                </div>
-                <div className="flex items-center gap-2 text-muted-foreground">
-                  <div className="w-1.5 h-1.5 rounded-full bg-muted-foreground/30" />
-                  <span>info@metabox.mu / 123456</span>
-                </div>
-                <div className="flex items-center gap-2 text-muted-foreground">
-                  <div className="w-1.5 h-1.5 rounded-full bg-muted-foreground/30" />
-                  <span>oowais@gmail.com / qwerty</span>
-                </div>
-              </div>
-            </div>
+
           </CardContent>
         </Card>
 

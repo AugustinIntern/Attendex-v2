@@ -24,13 +24,15 @@ async function fetchEmployeeData(): Promise<EmployeeRecord[]> {
   try {
     let response = await supabase
       .from("user_mapping")
-      .select("user_id, emp_code, name, email, is_archived");
+      .select("user_id, emp_code, name, email, is_archived")
+      .limit(2000);
 
     if (response.error && response.error.code === '42703') {
       console.warn("⚠️ COLUMN 'name' or 'email' or 'is_archived' MISSING. Falling back.");
       response = await supabase
         .from("user_mapping")
-        .select("user_id, emp_code");
+        .select("user_id, emp_code")
+        .limit(2000);
     }
 
     if (response.error) {

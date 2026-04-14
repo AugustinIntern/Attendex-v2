@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useState } from "react";
 import { supabase } from "@/lib/supabase";
 import { getAllEmployees, getEmployeeName, getCachedEmployeeName } from "@/lib/employees";
+import { formatCompanyTime, formatCompanyDate, getCompanyLocalTime } from "@/lib/utils";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
@@ -28,7 +29,6 @@ export default function DashboardPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [employeeCount, setEmployeeCount] = useState(0);
-  const [employeeNames, setEmployeeNames] = useState<Map<number, string>>(new Map());
 
   const fetchAttendanceLogs = useCallback(async () => {
     try {
@@ -39,15 +39,10 @@ export default function DashboardPage() {
       const employees = await getAllEmployees();
       setEmployeeCount(employees.length);
       
-      const nameMap = new Map<number, string>();
-      for (const emp of employees) {
-        const name = await getEmployeeName(emp.user_id);
-        nameMap.set(emp.user_id, name);
-      }
-      setEmployeeNames(nameMap);
+
 
       // Calculate today's date range
-      const date = new Date();
+      const date = getCompanyLocalTime(new Date());
       const year = date.getFullYear();
       const month = String(date.getMonth() + 1).padStart(2, "0");
       const day = String(date.getDate()).padStart(2, "0");
@@ -59,7 +54,8 @@ export default function DashboardPage() {
         .select("*")
         .gte("timestamp", todayStart)
         .lte("timestamp", todayEnd)
-        .order("timestamp", { ascending: false });
+        .order("timestamp", { ascending: false })
+        .limit(1000);
 
       if (fetchError) {
         throw fetchError;
@@ -111,12 +107,7 @@ export default function DashboardPage() {
         </h1>
         <p className="text-muted-foreground mt-2 font-medium flex items-center gap-2">
           <Clock className="h-4 w-4" />
-          {new Date().toLocaleDateString("en-US", {
-            weekday: "long",
-            year: "numeric",
-            month: "long",
-            day: "numeric",
-          })}
+          {formatCompanyDate(new Date(), true)}
         </p>
       </div>
 
@@ -225,7 +216,7 @@ export default function DashboardPage() {
                         {log.user_id}
                       </TableCell>
                       <TableCell className="text-muted-foreground font-medium">
-                        {new Date(log.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' })}
+                        {formatCompanyTime(log.timestamp, true)}
                       </TableCell>
                       <TableCell className="text-right">
                         <Badge

@@ -1,14 +1,33 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import AppLayout from "@/components/AppLayout";
 import { RefreshCw, CheckCircle2, AlertCircle, Info, Database, ShieldCheck, Zap } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 
+const RATE_LIMIT_HOURS = 4;
+const RATE_LIMIT_MS = RATE_LIMIT_HOURS * 60 * 60 * 1000;
+
 export default function SettingsPage() {
   const [isSyncing, setIsSyncing] = useState(false);
+  const [lastSyncTime, setLastSyncTime] = useState<number | null>(null);
+  const [nextSyncTime, setNextSyncTime] = useState<number | null>(null);
+  const [isRateLimited, setIsRateLimited] = useState(false);
+
+  useEffect(() => {
+    const storedTime = localStorage.getItem("lastZohoSync");
+    if (storedTime) {
+      const time = parseInt(storedTime, 10);
+      setLastSyncTime(time);
+      if (Date.now() - time < RATE_LIMIT_MS) {
+        setIsRateLimited(true);
+        setNextSyncTime(time + RATE_LIMIT_MS);
+      }
+    }
+  }, []);
+
   const [syncResult, setSyncResult] = useState<{
     success: boolean;
     message: string;
@@ -25,6 +44,15 @@ export default function SettingsPage() {
       });
 
       const data = await response.json();
+      
+      if (data.success) {
+        const now = Date.now();
+        localStorage.setItem("lastZohoSync", now.toString());
+        setLastSyncTime(now);
+        setIsRateLimited(true);
+        setNextSyncTime(now + RATE_LIMIT_MS);
+      }
+
       setSyncResult({
         success: data.success,
         message: data.success 
@@ -68,8 +96,8 @@ export default function SettingsPage() {
                
                <CardHeader className="p-10 border-b border-muted bg-muted/5">
                  <div className="flex items-center gap-6">
-                    <div className="w-20 h-20 rounded-3xl bg-foreground dark:bg-white flex items-center justify-center shadow-2xl shadow-foreground/20 dark:shadow-none">
-                       <RefreshCw className="text-background dark:text-foreground w-10 h-10" />
+                    <div className="w-20 h-20 rounded-3xl bg-primary/10 flex items-center justify-center shadow-xl group-hover:bg-primary transition-all duration-500">
+                       <RefreshCw className="text-primary group-hover:text-primary-foreground w-10 h-10" />
                     </div>
                     <div>
                        <CardTitle className="text-3xl font-black tracking-tight">Zoho Integrator</CardTitle>
@@ -137,19 +165,26 @@ export default function SettingsPage() {
                   <div className="pt-4">
                      <Button
                        onClick={handleSync}
-                       disabled={isSyncing}
+                       disabled={isSyncing || isRateLimited}
                        className={`w-full h-20 rounded-2xl font-black text-lg tracking-widest group transition-all ${
-                         isSyncing 
+                         isSyncing || isRateLimited
                            ? "bg-muted text-muted-foreground cursor-not-allowed" 
                            : "bg-primary hover:bg-primary/90 text-primary-foreground shadow-2xl shadow-primary/30"
                        }`}
                      >
-                       <RefreshCw className={`w-6 h-6 mr-4 ${isSyncing ? "animate-spin" : "group-hover:rotate-180"} transition-transform duration-700`} />
-                       {isSyncing ? "ESTABLISHING RELAY..." : "EXECUTE MASTER SYNC"}
+                       <RefreshCw className={`w-6 h-6 mr-4 ${isSyncing ? "animate-spin" : isRateLimited ? "" : "group-hover:rotate-180"} transition-transform duration-700`} />
+                       {isSyncing ? "ESTABLISHING RELAY..." : isRateLimited ? "SYNC UNAVAILABLE" : "EXECUTE MASTER SYNC"}
                      </Button>
-                     <p className="text-center text-[10px] font-bold text-muted-foreground mt-6 italic tracking-wide uppercase opacity-50">
-                        * NO LOCAL OVERWRITE DETECTED. DELTA_RECONCILIATION ONLY.
-                     </p>
+                     
+                     {isRateLimited && lastSyncTime && nextSyncTime ? (
+                        <p className="text-center text-[10px] font-bold text-amber-500 mt-6 tracking-wide uppercase">
+                           * RATE LIMITED: Last synced at {new Date(lastSyncTime).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })} — Next sync available at {new Date(nextSyncTime).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                        </p>
+                     ) : (
+                        <p className="text-center text-[10px] font-bold text-muted-foreground mt-6 italic tracking-wide uppercase opacity-50">
+                           * NO LOCAL OVERWRITE DETECTED. DELTA_RECONCILIATION ONLY.
+                        </p>
+                     )}
                   </div>
                </CardContent>
             </Card>
@@ -157,7 +192,7 @@ export default function SettingsPage() {
 
           {/* Sidebar Area */}
           <div className="space-y-10">
-             <Card className="bg-foreground dark:bg-white rounded-[2.5rem] p-10 text-background dark:text-foreground shadow-2xl shadow-primary/10 relative overflow-hidden group">
+             <Card className="bg-background border-muted rounded-[2.5rem] p-10 text-foreground shadow-2xl shadow-primary/10 relative overflow-hidden group">
                 <div className="absolute -right-10 -bottom-10 w-40 h-40 bg-primary/20 rounded-full blur-[80px] group-hover:scale-150 transition-transform duration-1000" />
                 <h3 className="text-xl font-black tracking-tighter mb-10 flex items-center justify-between">
                    Quick Insight

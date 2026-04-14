@@ -11,6 +11,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { formatCompanyDate, formatCompanyTime } from "@/lib/utils";
 import { ChevronLeft, Edit3, Trash2, Calendar, Fingerprint, Mail, Hash, ShieldAlert, CheckCircle2, TrendingUp, Clock, AlertCircle } from "lucide-react";
 
 interface AttendanceLog {
@@ -84,7 +85,7 @@ export default function EmployeeDetailPage() {
       }
 
       const uniqueDays = new Set(
-        logs?.map((log) => new Date(log.timestamp).toDateString()) || []
+        logs?.map((log) => formatCompanyDate(log.timestamp)) || []
       );
       const presentDays = uniqueDays.size;
       const totalDays = new Date(selectedYear, selectedMonth + 1, 0).getDate();
@@ -213,71 +214,74 @@ export default function EmployeeDetailPage() {
 
         {/* Main Identity Card */}
         <Card className="rounded-[3rem] border-muted bg-background shadow-2xl shadow-primary/5 overflow-hidden relative">
-           <div className="absolute top-0 right-0 p-10 hidden xl:flex items-center gap-6">
-             <div className="space-y-4">
-               <Select value={selectedMonth.toString()} onValueChange={(v) => setSelectedMonth(parseInt(v))}>
-                  <SelectTrigger className="h-12 w-48 rounded-xl border-muted bg-muted/20 font-bold">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent className="rounded-xl border-muted">
-                    {months.map((m, i) => <SelectItem key={i} value={i.toString()}>{m}</SelectItem>)}
-                  </SelectContent>
-               </Select>
-               <Select value={selectedYear.toString()} onValueChange={(v) => setSelectedYear(parseInt(v))}>
-                  <SelectTrigger className="h-12 w-48 rounded-xl border-muted bg-muted/20 font-bold">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent className="rounded-xl border-muted">
-                    {years.map(y => <SelectItem key={y} value={y.toString()}>{y}</SelectItem>)}
-                  </SelectContent>
-               </Select>
-             </div>
-           </div>
-
            <CardHeader className="p-10 md:p-14 border-b border-muted bg-muted/5">
-              <div className="flex flex-col md:flex-row items-start md:items-center gap-10">
-                <div className="w-32 h-32 rounded-[2.5rem] bg-primary flex items-center justify-center text-4xl font-black text-primary-foreground shadow-2xl shadow-primary/30 uppercase">
-                  {employee.name.slice(0, 2)}
-                </div>
-                
-                <div className="space-y-4 flex-1">
-                  <div>
-                    <div className="flex flex-wrap items-center gap-4">
-                      <h2 className="text-5xl font-black tracking-tighter text-foreground leading-none">
+              <div className="flex flex-col xl:flex-row xl:justify-between xl:items-start gap-10 w-full">
+                {/* Identity Info */}
+                <div className="flex flex-col md:flex-row items-start md:items-center gap-10 flex-1 min-w-0">
+                  <div className="w-32 h-32 rounded-[2.5rem] bg-primary flex shrink-0 items-center justify-center text-4xl font-black text-primary-foreground shadow-2xl shadow-primary/30 uppercase">
+                    {employee.name.slice(0, 2)}
+                  </div>
+                  
+                  <div className="space-y-4 flex-1 min-w-0">
+                    <div>
+                      <h2 className="text-5xl font-black tracking-tighter text-foreground leading-tight break-words">
                         {employee.name}
                       </h2>
-                      {employee.is_archived && (
-                        <Badge className="bg-amber-500/20 text-amber-500 border-amber-500/30 px-4 py-1 font-black text-[10px] tracking-widest">
-                          <ShieldAlert className="w-3 h-3 mr-2" />
-                          ARCHIVED RECORD
-                        </Badge>
-                      )}
+                      <p className="text-xl font-medium text-muted-foreground mt-2 flex items-center gap-2 break-all">
+                         <Mail className="w-5 h-5 text-primary/50 shrink-0" />
+                         {employee.email}
+                      </p>
                     </div>
-                    <p className="text-xl font-medium text-muted-foreground mt-2 flex items-center gap-2">
-                       <Mail className="w-5 h-5 text-primary/50" />
-                       {employee.email}
-                    </p>
-                  </div>
 
-                  <div className="flex flex-wrap items-center gap-8 pt-2">
-                    <div className="flex items-center gap-3">
-                       <div className="w-10 h-10 rounded-xl bg-muted/50 flex items-center justify-center">
-                          <Fingerprint className="w-5 h-5 text-muted-foreground" />
-                       </div>
-                       <div>
-                          <p className="text-[10px] font-black text-muted-foreground uppercase tracking-widest">Employee Code</p>
-                          <p className="font-mono font-black text-lg text-primary">{employee.emp_code}</p>
-                       </div>
+                    <div className="flex flex-wrap items-center gap-8 pt-2">
+                      <div className="flex items-center gap-3">
+                         <div className="w-10 h-10 rounded-xl bg-muted/50 flex items-center justify-center shrink-0">
+                            <Fingerprint className="w-5 h-5 text-muted-foreground" />
+                         </div>
+                         <div className="min-w-0">
+                            <p className="text-[10px] font-black text-muted-foreground uppercase tracking-widest truncate">Employee Code</p>
+                            <p className="font-mono font-black text-lg text-primary truncate">{employee.emp_code}</p>
+                         </div>
+                      </div>
+                      <div className="flex items-center gap-3">
+                         <div className="w-10 h-10 rounded-xl bg-muted/50 flex items-center justify-center shrink-0">
+                            <Hash className="w-5 h-5 text-muted-foreground" />
+                         </div>
+                         <div className="min-w-0">
+                            <p className="text-[10px] font-black text-muted-foreground uppercase tracking-widest truncate">System Identifier</p>
+                            <p className="font-mono font-black text-lg truncate">#{employee.user_id}</p>
+                         </div>
+                      </div>
                     </div>
-                    <div className="flex items-center gap-3">
-                       <div className="w-10 h-10 rounded-xl bg-muted/50 flex items-center justify-center">
-                          <Hash className="w-5 h-5 text-muted-foreground" />
-                       </div>
-                       <div>
-                          <p className="text-[10px] font-black text-muted-foreground uppercase tracking-widest">System Identifier</p>
-                          <p className="font-mono font-black text-lg">#{employee.user_id}</p>
-                       </div>
-                    </div>
+                  </div>
+                </div>
+
+                {/* Right Actions / Status */}
+                <div className="flex flex-col items-start xl:items-end gap-6 shrink-0 pt-2 xl:pt-0">
+                  {employee.is_archived && (
+                    <Badge className="bg-amber-500/10 text-amber-500 border-amber-500/20 px-5 py-2 font-black text-xs uppercase tracking-[0.2em] shadow-lg shadow-amber-500/5">
+                      <ShieldAlert className="w-4 h-4 mr-2" />
+                      ARCHIVED RECORD
+                    </Badge>
+                  )}
+                  
+                  <div className="flex gap-4">
+                    <Select value={selectedMonth.toString()} onValueChange={(v) => setSelectedMonth(parseInt(v))}>
+                      <SelectTrigger className="h-12 w-40 rounded-xl border-muted bg-muted/20 font-bold focus:ring-0">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent className="rounded-xl border-muted">
+                        {months.map((m, i) => <SelectItem key={i} value={i.toString()}>{m}</SelectItem>)}
+                      </SelectContent>
+                    </Select>
+                    <Select value={selectedYear.toString()} onValueChange={(v) => setSelectedYear(parseInt(v))}>
+                      <SelectTrigger className="h-12 w-28 rounded-xl border-muted bg-muted/20 font-bold focus:ring-0">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent className="rounded-xl border-muted">
+                        {years.map(y => <SelectItem key={y} value={y.toString()}>{y}</SelectItem>)}
+                      </SelectContent>
+                    </Select>
                   </div>
                 </div>
               </div>
@@ -392,10 +396,10 @@ export default function EmployeeDetailPage() {
                           <p className="text-lg font-black text-foreground">Attendance Sequential Event</p>
                           <p className="text-sm font-bold text-muted-foreground flex items-center gap-2 mt-1">
                              <Calendar className="w-4 h-4" />
-                             {new Date(log.timestamp).toLocaleDateString("en-US", { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}
+                             {formatCompanyDate(log.timestamp, true)}
                              <span className="mx-2 opacity-30">•</span>
                              <Clock className="w-4 h-4" />
-                             {new Date(log.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' })}
+                             {formatCompanyTime(log.timestamp, true)}
                           </p>
                         </div>
                       </div>

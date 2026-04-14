@@ -8,7 +8,8 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Input } from "@/components/ui/input";
-import { Search, Archive, AlertCircle, History, TrendingUp } from "lucide-react";
+import { formatCompanyDate } from "@/lib/utils";
+import { Search, Archive, AlertCircle, History } from "lucide-react";
 
 interface Employee {
   user_id: number;
@@ -71,7 +72,7 @@ export default function ArchivedEmployeesPage() {
           ? logs.filter((log) => log.user_id === userId)
           : [];
         const uniqueDays = new Set(
-          employeeLogs.map((log) => new Date(log.timestamp).toDateString())
+          employeeLogs.map((log) => formatCompanyDate(log.timestamp))
         );
         const presentDays = uniqueDays.size;
         const totalDays = Math.min(now.getDate(), 31);
@@ -104,9 +105,9 @@ export default function ArchivedEmployeesPage() {
 
   const getStatusConfig = (rate: number) => {
     if (rate >= 90) return { label: "EXCELLENT", cls: "bg-emerald-500/20 text-emerald-400 border-emerald-500/30" };
-    if (rate >= 75) return { label: "OPTIMAL",   cls: "bg-blue-500/20 text-blue-400 border-blue-500/30" };
-    if (rate >= 60) return { label: "WARNING",   cls: "bg-amber-500/20 text-amber-400 border-amber-500/30" };
-    return            { label: "CRITICAL",   cls: "bg-red-500/20 text-red-400 border-red-500/30" };
+    if (rate >= 75) return { label: "OPTIMAL", cls: "bg-blue-500/20 text-blue-400 border-blue-500/30" };
+    if (rate >= 60) return { label: "WARNING", cls: "bg-amber-500/20 text-amber-400 border-amber-500/30" };
+    return { label: "CRITICAL", cls: "bg-red-500/20 text-red-400 border-red-500/30" };
   };
 
   return (

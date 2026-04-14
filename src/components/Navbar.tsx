@@ -6,7 +6,7 @@ import { useAuth } from "@/lib/auth-context";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Menu, LogOut, User, ChevronDown, ExternalLink, Zap } from "lucide-react";
+import { Menu, LogOut, ChevronDown, Zap } from "lucide-react";
 
 interface NavbarProps {
   onMenuToggle?: () => void;
@@ -112,10 +112,6 @@ export default function Navbar({ onMenuToggle }: NavbarProps) {
                     )}
                   </div>
                   <div className="p-2">
-                    <button className="w-full flex items-center gap-3 px-4 py-3 text-sm font-bold text-muted-foreground hover:text-foreground hover:bg-muted/40 rounded-xl transition-all">
-                      <User className="w-4 h-4" />
-                      Profile Settings
-                    </button>
                     <button
                       onClick={handleLogout}
                       className="w-full flex items-center gap-3 px-4 py-3 text-sm font-bold text-destructive hover:bg-destructive/10 rounded-xl transition-all"

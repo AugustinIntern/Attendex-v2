@@ -4,18 +4,17 @@ import { useCallback, useEffect, useState, useMemo } from "react";
 import AppLayout from "@/components/AppLayout";
 import { supabase } from "@/lib/supabase";
 import { getAllEmployees } from "@/lib/employees";
-import {
-  BarChart,
-  Bar,
-  XAxis,
-  YAxis,
-  CartesianGrid,
-  Tooltip,
-  ResponsiveContainer,
-  AreaChart,
-  Area,
-  Cell,
-} from "recharts";
+import dynamic from "next/dynamic";
+const ResponsiveContainer = dynamic(() => import("recharts").then(m => m.ResponsiveContainer), { ssr: false });
+const AreaChart = dynamic(() => import("recharts").then(m => m.AreaChart), { ssr: false });
+const Area = dynamic(() => import("recharts").then(m => m.Area), { ssr: false });
+const BarChart = dynamic(() => import("recharts").then(m => m.BarChart), { ssr: false });
+const Bar = dynamic(() => import("recharts").then(m => m.Bar), { ssr: false });
+const XAxis = dynamic(() => import("recharts").then(m => m.XAxis), { ssr: false });
+const YAxis = dynamic(() => import("recharts").then(m => m.YAxis), { ssr: false });
+const CartesianGrid = dynamic(() => import("recharts").then(m => m.CartesianGrid), { ssr: false });
+const Tooltip = dynamic(() => import("recharts").then(m => m.Tooltip), { ssr: false });
+const Cell = dynamic(() => import("recharts").then(m => m.Cell), { ssr: false });
 import {
   CalendarDays,
   CalendarRange,
@@ -23,11 +22,9 @@ import {
   Users,
   Clock,
   TrendingUp,
-  BarChart3,
   CheckCircle2,
   XCircle,
   Calendar,
-  ChevronRight,
   Zap,
   Target,
   Activity,
@@ -43,7 +40,6 @@ import {
   endOfYear,
   format,
   eachDayOfInterval,
-  isSameDay,
   parseISO,
   eachMonthOfInterval,
   isSameMonth
@@ -53,6 +49,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { getCompanyLocalTime } from "@/lib/utils";
 
 type Period = "week" | "month" | "year";
 
@@ -83,7 +80,7 @@ export default function StatisticsPage() {
       const employees = await getAllEmployees();
       setEmployeeCount(employees.length);
 
-      const now = new Date();
+      const now = getCompanyLocalTime(new Date());
       let start: Date;
       let end: Date;
 
@@ -103,7 +100,8 @@ export default function StatisticsPage() {
         .select("id, user_id, timestamp, check_type")
         .gte("timestamp", start.toISOString())
         .lte("timestamp", end.toISOString())
-        .order("timestamp", { ascending: true });
+        .order("timestamp", { ascending: true })
+        .limit(5000);
 
       if (fetchError) throw fetchError;
       setLogs(data || []);
@@ -120,80 +118,119 @@ export default function StatisticsPage() {
   }, [fetchData]);
 
   const statsData = useMemo(() => {
-    if (loading || !logs.length) return null;
+    if (loading || !logs || !logs.length) return null;
 
-    const now = new Date();
-    let intervalDay: Date[];
-    
-    if (period === "week") {
-      intervalDay = eachDayOfInterval({
-        start: startOfWeek(now, { weekStartsOn: 1 }),
-        end: endOfWeek(now, { weekStartsOn: 1 }),
-      });
-    } else if (period === "month") {
-      intervalDay = eachDayOfInterval({
-        start: startOfMonth(now),
-        end: endOfMonth(now),
-      });
-    } else {
-      intervalDay = eachDayOfInterval({
-        start: startOfYear(now),
-        end: endOfYear(now),
-      });
-    }
+    try {
+      const now = getCompanyLocalTime(new Date());
 
-    const chartData = intervalDay.map(date => {
-      const dayLogs = logs.filter(log => isSameDay(parseISO(log.timestamp), date));
-      const presentIds = new Set(dayLogs.filter(l => l.check_type === 1).map(l => l.user_id));
+      // Pre-compute local dates to prevent O(N^2) format and getCompanyLocalTime operations
+      const parsedLogs = logs.map(log => {
+        try {
+          if (!log.timestamp) return null;
+          const localDate = getCompanyLocalTime(log.timestamp);
+          if (isNaN(localDate.getTime())) return null;
+          return {
+            ...log,
+            localDate,
+            dateStr: format(localDate, "yyyy-MM-dd")
+          };
+        } catch (e) {
+          return null; // Silently discard invalid timestamps
+        }
+      }).filter(log => log !== null) as (AttendanceLog & { localDate: Date; dateStr: string })[];
+
+      let intervalDay: Date[];
       
-      return {
-        name: period === "year" ? format(date, "MMM dd") : format(date, "MMM dd"),
-        fullDate: format(date, "yyyy-MM-dd"),
-        present: presentIds.size,
-        absent: Math.max(0, employeeCount - presentIds.size),
-        checkins: dayLogs.filter(l => l.check_type === 1).length,
-      };
-    });
+      if (period === "week") {
+        intervalDay = eachDayOfInterval({
+          start: startOfWeek(now, { weekStartsOn: 1 }),
+          end: endOfWeek(now, { weekStartsOn: 1 }),
+        });
+      } else if (period === "month") {
+        intervalDay = eachDayOfInterval({
+          start: startOfMonth(now),
+          end: endOfMonth(now),
+        });
+      } else {
+        intervalDay = eachDayOfInterval({
+          start: startOfYear(now),
+          end: endOfYear(now),
+        });
+      }
 
-    let displayChartData = chartData;
-    if (period === "year") {
-      const months = eachMonthOfInterval({
-        start: startOfYear(now),
-        end: endOfYear(now),
-      });
-      displayChartData = months.map(m => {
-        const monthLogs = logs.filter(log => isSameMonth(parseISO(log.timestamp), m));
-        const uniquePresenceDays = new Set(
-          monthLogs.filter(l => l.check_type === 1).map(l => format(parseISO(l.timestamp), "yyyy-MM-dd"))
-        );
+      const chartData = intervalDay.map(date => {
+        const dateStr = format(date, "yyyy-MM-dd");
+        const dayLogs = parsedLogs.filter(log => log.dateStr === dateStr);
+        const presentIds = new Set(dayLogs.filter(l => l.check_type === 1).map(l => l.user_id));
         
-        const totalPresentInMonth = Array.from(uniquePresenceDays).reduce((acc, dateStr) => {
-          const dailyLogs = monthLogs.filter(l => format(parseISO(l.timestamp), "yyyy-MM-dd") === dateStr);
-          return acc + new Set(dailyLogs.filter(l => l.check_type === 1).map(l => l.user_id)).size;
-        }, 0);
-
-        const avgPresent = uniquePresenceDays.size > 0 ? Math.round(totalPresentInMonth / uniquePresenceDays.size) : 0;
-
         return {
-          name: format(m, "MMM"),
-          present: avgPresent,
-          absent: Math.max(0, employeeCount - avgPresent),
-          checkins: monthLogs.filter(l => l.check_type === 1).length,
+          name: format(date, "MMM dd"),
+          fullDate: dateStr,
+          present: presentIds.size,
+          absent: Math.max(0, employeeCount - presentIds.size),
+          checkins: dayLogs.filter(l => l.check_type === 1).length,
         };
       });
+
+      let displayChartData = chartData;
+      if (period === "year") {
+        const months = eachMonthOfInterval({
+          start: startOfYear(now),
+          end: endOfYear(now),
+        });
+        displayChartData = months.map(m => {
+          const monthLogs = parsedLogs.filter(log => isSameMonth(log.localDate, m));
+          const uniquePresenceDays = new Set(
+            monthLogs.filter(l => l.check_type === 1).map(l => l.dateStr)
+          );
+          
+          const totalPresentInMonth = Array.from(uniquePresenceDays).reduce((acc, dateStr) => {
+            const dailyLogs = monthLogs.filter(l => l.dateStr === dateStr);
+            return acc + new Set(dailyLogs.filter(l => l.check_type === 1).map(l => l.user_id)).size;
+          }, 0);
+
+          const avgPresent = uniquePresenceDays.size > 0 ? Math.round(totalPresentInMonth / uniquePresenceDays.size) : 0;
+
+          return {
+            name: format(m, "MMM"),
+            present: avgPresent,
+            absent: Math.max(0, employeeCount - avgPresent),
+            checkins: monthLogs.filter(l => l.check_type === 1).length,
+          };
+        });
+      }
+
+      const totalCheckins = parsedLogs.filter(l => l.check_type === 1).length;
+      
+      const validPastDaysList = chartData.filter(d => {
+        try {
+          return parseISO(d.fullDate) <= now;
+        } catch {
+          return false;
+        }
+      });
+      
+      const avgAttendance = chartData.reduce((acc, curr) => acc + curr.present, 0) / (validPastDaysList.length || 1);
+      const attendanceRate = employeeCount > 0 ? (avgAttendance / employeeCount) * 100 : 0;
+
+      return {
+        displayChartData,
+        totalCheckins,
+        attendanceRate: Math.round(attendanceRate),
+        avgDailyPresent: Math.round(avgAttendance),
+        activeEmployees: new Set(parsedLogs.map(l => l.user_id)).size
+      };
+    } catch (error) {
+      console.error("Critical error generating statistics view:", error);
+      // Fallback state on total failure
+      return {
+        displayChartData: [],
+        totalCheckins: 0,
+        attendanceRate: 0,
+        avgDailyPresent: 0,
+        activeEmployees: 0
+      };
     }
-
-    const totalCheckins = logs.filter(l => l.check_type === 1).length;
-    const avgAttendance = chartData.reduce((acc, curr) => acc + curr.present, 0) / (chartData.filter(d => parseISO(d.fullDate) <= now).length || 1);
-    const attendanceRate = employeeCount > 0 ? (avgAttendance / employeeCount) * 100 : 0;
-
-    return {
-      displayChartData,
-      totalCheckins,
-      attendanceRate: Math.round(attendanceRate),
-      avgDailyPresent: Math.round(avgAttendance),
-      activeEmployees: new Set(logs.map(l => l.user_id)).size
-    };
   }, [logs, employeeCount, period, loading]);
 
   const periods: { id: Period; label: string; icon: any }[] = [
@@ -326,50 +363,50 @@ export default function StatisticsPage() {
                   </div>
                 </div>
 
-                <div className="h-[400px] w-full">
+                <div className="w-full" style={{ width: '100%', minHeight: '400px' }}>
                   {isMounted && (
-                    <ResponsiveContainer width="100%" height="100%">
+                    <ResponsiveContainer width="100%" height={400}>
                     <AreaChart data={statsData?.displayChartData}>
                       <defs>
                         <linearGradient id="colorPresent" x1="0" y1="0" x2="0" y2="1">
-                          <stop offset="5%" stopColor="hsl(var(--primary))" stopOpacity={0.4}/>
-                          <stop offset="95%" stopColor="hsl(var(--primary))" stopOpacity={0}/>
+                          <stop offset="5%" stopColor="var(--primary)" stopOpacity={0.4}/>
+                          <stop offset="95%" stopColor="var(--primary)" stopOpacity={0}/>
                         </linearGradient>
                       </defs>
-                      <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="hsl(var(--muted))" opacity={0.5} />
+                      <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="var(--muted)" opacity={0.5} />
                       <XAxis 
                         dataKey="name" 
                         axisLine={false}
                         tickLine={false}
-                        tick={{ fill: 'hsl(var(--muted-foreground))', fontSize: 10, fontWeight: 700 }}
+                        tick={{ fill: 'var(--muted-foreground)', fontSize: 10, fontWeight: 700 }}
                         dy={15}
                       />
                       <YAxis 
                         axisLine={false}
                         tickLine={false}
-                        tick={{ fill: 'hsl(var(--muted-foreground))', fontSize: 10, fontWeight: 700 }}
+                        tick={{ fill: 'var(--muted-foreground)', fontSize: 10, fontWeight: 700 }}
                         dx={-15}
                       />
                       <Tooltip 
                         contentStyle={{ 
-                          backgroundColor: 'hsl(var(--background))', 
+                          backgroundColor: 'var(--background)', 
                           borderRadius: '24px', 
-                          border: '1px solid hsl(var(--muted))', 
+                          border: '1px solid var(--muted)', 
                           boxShadow: '0 25px 50px -12px rgba(0,0,0,0.2)',
                           padding: '20px'
                         }}
-                        itemStyle={{ color: 'hsl(var(--primary))', fontWeight: 900 }}
-                        labelStyle={{ fontWeight: 900, marginBottom: '8px', color: 'hsl(var(--foreground))' }}
+                        itemStyle={{ color: 'var(--primary)', fontWeight: 900 }}
+                        labelStyle={{ fontWeight: 900, marginBottom: '8px', color: 'var(--foreground)' }}
                       />
                       <Area 
                         type="monotone" 
                         dataKey="present" 
-                        stroke="hsl(var(--primary))" 
+                        stroke="var(--primary)" 
                         strokeWidth={6}
                         fillOpacity={1} 
                         fill="url(#colorPresent)" 
                         animationDuration={2000}
-                        activeDot={{ r: 8, stroke: 'hsl(var(--background))', strokeWidth: 4 }}
+                        activeDot={{ r: 8, stroke: 'var(--background)', strokeWidth: 4 }}
                       />
                     </AreaChart>
                   </ResponsiveContainer>
@@ -384,35 +421,35 @@ export default function StatisticsPage() {
                 <p className="text-muted-foreground font-medium text-sm mb-10 lowercase italic">
                   Intensity mapping of log activity
                 </p>
-                <div className="flex-1 h-[250px] w-full mt-4">
+                <div className="flex-1 mt-4" style={{ width: '100%', minHeight: '250px' }}>
                   {isMounted && (
-                    <ResponsiveContainer width="100%" height="100%">
+                    <ResponsiveContainer width="100%" height={250}>
                     <BarChart data={statsData?.displayChartData?.slice(-7)}>
-                      <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="hsl(var(--muted))" opacity={0.3} />
+                      <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="var(--muted)" opacity={0.3} />
                       <XAxis 
                         dataKey="name" 
                         axisLine={false}
                         tickLine={false}
-                        tick={{ fill: 'hsl(var(--muted-foreground))', fontSize: 9, fontWeight: 700 }}
+                        tick={{ fill: 'var(--muted-foreground)', fontSize: 9, fontWeight: 700 }}
                         dy={10}
                       />
                       <YAxis 
                         axisLine={false}
                         tickLine={false}
-                        tick={{ fill: 'hsl(var(--muted-foreground))', fontSize: 9, fontWeight: 700 }}
+                        tick={{ fill: 'var(--muted-foreground)', fontSize: 9, fontWeight: 700 }}
                       />
                       <Tooltip 
-                        cursor={{fill: 'hsl(var(--muted))', opacity: 0.1}}
+                        cursor={{fill: 'var(--muted)', opacity: 0.1}}
                         contentStyle={{ 
-                          backgroundColor: 'hsl(var(--background))', 
+                          backgroundColor: 'var(--background)', 
                           borderRadius: '16px', 
-                          border: '1px solid hsl(var(--muted))',
+                          border: '1px solid var(--muted)',
                           padding: '12px'
                         }}
                       />
                       <Bar 
                         dataKey="checkins" 
-                        fill="hsl(var(--primary))" 
+                        fill="var(--primary)" 
                         radius={[12, 12, 0, 0]} 
                         animationDuration={2500}
                       >
