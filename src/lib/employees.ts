@@ -29,10 +29,10 @@ async function fetchEmployeeData(): Promise<EmployeeRecord[]> {
 
     if (response.error && response.error.code === '42703') {
       console.warn("⚠️ COLUMN 'name' or 'email' or 'is_archived' MISSING. Falling back.");
-      response = await supabase
+      response = (await supabase
         .from("user_mapping")
         .select("user_id, emp_code")
-        .limit(2000);
+        .limit(2000)) as any;
     }
 
     if (response.error) {
