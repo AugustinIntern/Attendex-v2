@@ -200,10 +200,7 @@ export default function EmployeesPage() {
                     {stats ? (
                       <div className="space-y-6">
                         <div className="flex justify-between items-center bg-muted/30 p-3 rounded-xl">
-                          <span className="text-[10px] font-black text-muted-foreground uppercase tracking-widest pl-2">Attendance</span>
-                          <Badge className={`rounded-lg font-black text-[10px] tracking-widest border-none ${status?.color} text-white`}>
-                            {status?.label}
-                          </Badge>
+                          <span className="text-[10px] font-black text-muted-foreground uppercase tracking-widest pl-2">Attendance Summary</span>
                         </div>
 
                         <div className="grid grid-cols-2 gap-4">
@@ -217,14 +214,7 @@ export default function EmployeesPage() {
                           </div>
                         </div>
 
-                        <div className="relative pt-2">
-                          <div className="w-full bg-muted/30 rounded-full h-1.5 overflow-hidden">
-                            <div
-                              className="bg-primary h-full transition-all duration-1000 ease-out"
-                              style={{ width: `${Math.min(stats.attendance_rate, 100)}%` }}
-                            />
-                          </div>
-                        </div>
+
                       </div>
                     ) : (
                       <div className="p-8 text-center bg-muted/10 rounded-[1.5rem] border border-dashed border-muted">

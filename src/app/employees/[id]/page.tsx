@@ -288,8 +288,8 @@ export default function EmployeeDetailPage() {
            </CardHeader>
         </Card>
 
-        {/* Intelligence Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
+        {/* Statistics Grid */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
            <Card className="rounded-[2.5rem] border-muted shadow-lg bg-background p-8 group hover:border-emerald-500/30 transition-all duration-500">
               <div className="flex items-center justify-between mb-4">
                  <div className="w-14 h-14 rounded-2xl bg-emerald-500/10 flex items-center justify-center text-emerald-500 group-hover:bg-emerald-500 group-hover:text-white transition-all">
@@ -323,42 +323,10 @@ export default function EmployeeDetailPage() {
               <p className="text-xs font-bold text-muted-foreground mt-1 lowercase">Percentage of days present</p>
            </Card>
 
-           <Card className={`rounded-[2.5rem] border-muted shadow-lg bg-background p-8 group hover:border-foreground/30 transition-all duration-500`}>
-              <div className="flex items-center justify-between mb-4">
-                 <div className={`w-14 h-14 rounded-2xl ${status.color.split(' ')[0]} flex items-center justify-center text-white`}>
-                    <ShieldAlert className="w-7 h-7" />
-                 </div>
-                 <p className="text-[10px] font-black text-muted-foreground uppercase tracking-widest">Rating</p>
-              </div>
-              <p className="text-2xl font-black uppercase tracking-tighter">{status.label}</p>
-              <p className="text-xs font-bold text-muted-foreground mt-2 lowercase">Overall attendance rating</p>
-           </Card>
+
         </div>
 
-        {/* Progress Matrix */}
-        <Card className="rounded-[3rem] border-muted bg-muted/5 p-10">
-           <div className="flex items-center justify-between mb-8">
-              <h3 className="text-2xl font-black tracking-tight flex items-center gap-4">
-                 <div className="w-1.5 h-8 bg-primary rounded-full" />
-                 Attendance Progress
-              </h3>
-              <p className="text-muted-foreground font-bold">{employee.attendance_rate}% ATTENDANCE</p>
-           </div>
-           
-           <div className="relative pt-4">
-              <div className="w-full bg-muted border border-muted rounded-full h-4 overflow-hidden shadow-inner">
-                 <div
-                   className="bg-primary h-full transition-all duration-1000 ease-in-out shadow-[0_0_20px_rgba(var(--primary),0.5)]"
-                   style={{ width: `${Math.min(employee.attendance_rate, 100)}%` }}
-                 />
-              </div>
-              <div className="flex justify-between mt-4 text-[10px] font-black text-muted-foreground uppercase tracking-[0.2em]">
-                 <span>LOW (0%)</span>
-                 <span>AVERAGE (50%)</span>
-                 <span>PERFECT (100%)</span>
-              </div>
-           </div>
-        </Card>
+
 
         {/* Telemetry Logs */}
         <Card className="rounded-[3rem] border-muted overflow-hidden">
