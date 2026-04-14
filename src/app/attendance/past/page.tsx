@@ -125,10 +125,16 @@ export default function PastDayPage() {
 
   const handleEditClick = (log: AttendanceLog) => {
     const logDate = new Date(log.timestamp);
-    const timeStr = format(logDate, "HH:mm");
-    const dateStr = format(logDate, "yyyy-MM-dd");
-    setEditTime(timeStr);
-    setEditDate(dateStr);
+    
+    // Extract raw UTC values to avoid 4-hour browser offset
+    const y = logDate.getUTCFullYear();
+    const m = String(logDate.getUTCMonth() + 1).padStart(2, '0');
+    const d = String(logDate.getUTCDate()).padStart(2, '0');
+    const hh = String(logDate.getUTCHours()).padStart(2, '0');
+    const mm = String(logDate.getUTCMinutes()).padStart(2, '0');
+
+    setEditTime(`${hh}:${mm}`);
+    setEditDate(`${y}-${m}-${d}`);
     setEditSynthetic(log.device_ip === "synthetic" ? "Yes" : "No");
     setEditingLog(log);
   };
@@ -137,13 +143,8 @@ export default function PastDayPage() {
     if (!editingLog) return;
     setIsSaving(true);
     try {
-      // 1. Combine Date and Time into Timestamp
-      const [y, mon, d] = editDate.split("-").map(Number);
-      const [h, m] = editTime.split(":").map(Number);
-      
-      // Use the local Date construction to represent the chosen wall-clock time
-      const finalDate = new Date(y, mon - 1, d, h, m, 0);
-      const newTimestamp = finalDate.toISOString();
+      // 1. Combine Date and Time into Timestamp (Strictly UTC)
+      const newTimestamp = `${editDate}T${editTime}:00.000Z`;
 
       // 2. Map synthetic to device_ip
       const newDeviceIp = editSynthetic === "Yes" ? "synthetic" : "192.168.68.52";
