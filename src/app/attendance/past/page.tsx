@@ -50,7 +50,7 @@ export default function PastDayPage() {
   // Edit State
   const [editingLog, setEditingLog] = useState<AttendanceLog | null>(null);
   const [editTime, setEditTime] = useState("");
-  const [editSynthetic, setEditSynthetic] = useState("");
+  const [editType, setEditType] = useState("");
   const [isSaving, setIsSaving] = useState(false);
   const [editDate, setEditDate] = useState("");
 
@@ -123,7 +123,6 @@ export default function PastDayPage() {
   const presentCount = uniquePresentIds.size;
   const absenceCount = employeeCount - presentCount;
 
-  const handleEditClick = (log: AttendanceLog) => {
     const logDate = new Date(log.timestamp);
     
     // Extract raw UTC values to avoid 4-hour browser offset
@@ -135,7 +134,12 @@ export default function PastDayPage() {
 
     setEditTime(`${hh}:${mm}`);
     setEditDate(`${y}-${m}-${d}`);
-    setEditSynthetic(log.device_ip === "synthetic" ? "Yes" : "No");
+    
+    // Map device_ip to record type
+    if (log.device_ip === "synthetic") setEditType("Synthetic");
+    else if (log.device_ip === "admin_fix") setEditType("Admin Fix");
+    else setEditType("Physical");
+    
     setEditingLog(log);
   };
 
@@ -146,8 +150,10 @@ export default function PastDayPage() {
       // 1. Combine Date and Time into Timestamp (Strictly UTC)
       const newTimestamp = `${editDate}T${editTime}:00.000Z`;
 
-      // 2. Map synthetic to device_ip
-      const newDeviceIp = editSynthetic === "Yes" ? "synthetic" : "192.168.68.52";
+      // 2. Map type back to device_ip
+      let newDeviceIp = "192.168.68.52";
+      if (editType === "Synthetic") newDeviceIp = "synthetic";
+      else if (editType === "Admin Fix") newDeviceIp = "admin_fix";
 
       const { error } = await supabase
         .from("attendance_logs")
@@ -296,7 +302,7 @@ export default function PastDayPage() {
                     <TableHead className="px-10 font-black h-16 uppercase text-xs tracking-[0.2em] w-[35%]">Employee</TableHead>
                     <TableHead className="font-black uppercase text-xs tracking-[0.2em] w-[15%]">ID</TableHead>
                     <TableHead className="font-black uppercase text-xs tracking-[0.2em] w-[15%]">Time</TableHead>
-                    <TableHead className="font-black uppercase text-xs tracking-[0.2em] w-[15%]">Synthetic</TableHead>
+                    <TableHead className="font-black uppercase text-xs tracking-[0.2em] w-[15%]">Type</TableHead>
                     <TableHead className="px-10 font-black uppercase text-xs tracking-[0.2em] text-right w-[20%]">Status</TableHead>
                   </TableRow>
                 </TableHeader>
@@ -321,11 +327,13 @@ export default function PastDayPage() {
                       <TableCell className="text-muted-foreground font-semibold">
                         {formatCompanyTime(log.timestamp)}
                       </TableCell>
-                      <TableCell className="font-mono text-xs font-bold">
+                      <TableCell className="font-mono text-[10px] font-black uppercase tracking-tight">
                         {log.device_ip === "synthetic" ? (
-                          <Badge variant="outline" className="text-amber-500 border-amber-500/20 bg-amber-500/5 font-black uppercase tracking-tighter">Yes</Badge>
+                          <Badge variant="outline" className="text-amber-500 border-amber-500/20 bg-amber-500/5">Synthetic</Badge>
+                        ) : log.device_ip === "admin_fix" ? (
+                          <Badge variant="outline" className="text-blue-500 border-blue-500/20 bg-blue-500/5">Admin Fix</Badge>
                         ) : (
-                          <span className="text-muted-foreground opacity-50 pl-2">No</span>
+                          <Badge variant="outline" className="text-primary border-primary/20 bg-primary/5">Physical</Badge>
                         )}
                       </TableCell>
                       <TableCell className="px-10 text-right">
@@ -388,14 +396,15 @@ export default function PastDayPage() {
             </div>
 
             <div className="space-y-3">
-              <label className="text-[10px] font-black text-muted-foreground uppercase tracking-widest ml-1">Synthetic Record</label>
-              <Select value={editSynthetic} onValueChange={setEditSynthetic}>
+              <label className="text-[10px] font-black text-muted-foreground uppercase tracking-widest ml-1">Record Type</label>
+              <Select value={editType} onValueChange={setEditType}>
                 <SelectTrigger className="h-16 rounded-2xl bg-muted/30 border-muted focus:ring-primary font-bold text-lg px-6">
-                  <SelectValue placeholder="Is synthetic?" />
+                  <SelectValue placeholder="Select type" />
                 </SelectTrigger>
                 <SelectContent className="rounded-2xl border-muted bg-background shadow-2xl">
-                  <SelectItem value="Yes" className="font-bold py-3 focus:bg-primary/10">Yes (System Generated)</SelectItem>
-                  <SelectItem value="No" className="font-bold py-3 focus:bg-primary/10">No (Physical Scan)</SelectItem>
+                  <SelectItem value="Physical" className="font-bold py-3 focus:bg-primary/10">Physical Scan (Biometric)</SelectItem>
+                  <SelectItem value="Synthetic" className="font-bold py-3 focus:bg-primary/10">Synthetic (Automated)</SelectItem>
+                  <SelectItem value="Admin Fix" className="font-bold py-3 focus:bg-primary/10">Admin Fix (Manual)</SelectItem>
                 </SelectContent>
               </Select>
             </div>
