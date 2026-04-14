@@ -54,10 +54,10 @@ export default function LoginPage() {
         <Card className="rounded-[3rem] border-muted shadow-2xl shadow-black/10 bg-background/80 backdrop-blur-xl overflow-hidden">
           <CardHeader className="p-10 pb-6">
             <CardTitle className="text-2xl font-black tracking-tight">
-              System Access
+              Sign In
             </CardTitle>
             <CardDescription className="font-bold text-muted-foreground text-xs uppercase tracking-[0.2em] mt-1">
-              Identity verification required
+              Please enter your credentials
             </CardDescription>
           </CardHeader>
 
@@ -112,12 +112,12 @@ export default function LoginPage() {
                 {isLoading ? (
                   <>
                     <Loader2 className="w-5 h-5 mr-3 animate-spin" />
-                    Authenticating...
+                    Signing In...
                   </>
                 ) : (
                   <>
                     <ShieldCheck className="w-5 h-5 mr-3" />
-                    Access System
+                    Sign In
                   </>
                 )}
               </Button>

@@ -15,9 +15,9 @@ const menuItems = [
   { label: "Dashboard", href: "/dashboard", icon: LayoutDashboard },
   { label: "Active Employees", href: "/employees", icon: Users },
   { label: "Archived Employees", href: "/employees/archived", icon: Archive },
-  { label: "Past Day", href: "/attendance/past", icon: CalendarDays },
+  { label: "Past Attendance", href: "/attendance/past", icon: CalendarDays },
   { label: "Statistics", href: "/statistics", icon: BarChart3 },
-  { label: "Update Options", href: "/settings", icon: Settings },
+  { label: "Settings", href: "/settings", icon: Settings },
 ];
 
 export default function Sidebar({ isOpen = true, onClose }: SidebarProps) {

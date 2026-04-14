@@ -184,8 +184,8 @@ export default function EmployeeDetailPage() {
               <ChevronLeft className="w-6 h-6" />
             </Button>
             <div>
-               <p className="text-[10px] font-black text-muted-foreground uppercase tracking-[0.2em] mb-1">Navigation / Workforce</p>
-               <h1 className="text-2xl font-black tracking-tight">Personnel Dossier</h1>
+               <p className="text-[10px] font-black text-muted-foreground uppercase tracking-[0.2em] mb-1">Employees</p>
+               <h1 className="text-2xl font-black tracking-tight">Employee Profile</h1>
             </div>
           </div>
 
@@ -197,7 +197,7 @@ export default function EmployeeDetailPage() {
                 className="h-14 px-8 rounded-2xl font-black text-xs uppercase tracking-widest border-muted bg-background hover:bg-muted/30"
               >
                 <Edit3 className="w-4 h-4 mr-3 text-primary" />
-                Modify Record
+                Modify Profile
               </Button>
               <Button
                 onClick={() => setShowArchiveModal(true)}
@@ -239,7 +239,7 @@ export default function EmployeeDetailPage() {
                             <Fingerprint className="w-5 h-5 text-muted-foreground" />
                          </div>
                          <div className="min-w-0">
-                            <p className="text-[10px] font-black text-muted-foreground uppercase tracking-widest truncate">Employee Code</p>
+                            <p className="text-[10px] font-black text-muted-foreground uppercase tracking-widest truncate">Employee ID</p>
                             <p className="font-mono font-black text-lg text-primary truncate">{employee.emp_code}</p>
                          </div>
                       </div>
@@ -248,7 +248,7 @@ export default function EmployeeDetailPage() {
                             <Hash className="w-5 h-5 text-muted-foreground" />
                          </div>
                          <div className="min-w-0">
-                            <p className="text-[10px] font-black text-muted-foreground uppercase tracking-widest truncate">System Identifier</p>
+                            <p className="text-[10px] font-black text-muted-foreground uppercase tracking-widest truncate">System ID</p>
                             <p className="font-mono font-black text-lg truncate">#{employee.user_id}</p>
                          </div>
                       </div>
@@ -295,10 +295,10 @@ export default function EmployeeDetailPage() {
                  <div className="w-14 h-14 rounded-2xl bg-emerald-500/10 flex items-center justify-center text-emerald-500 group-hover:bg-emerald-500 group-hover:text-white transition-all">
                     <CheckCircle2 className="w-7 h-7" />
                  </div>
-                 <p className="text-[10px] font-black text-muted-foreground uppercase tracking-widest">Attendance</p>
+                 <p className="text-[10px] font-black text-muted-foreground uppercase tracking-widest">Days Present</p>
               </div>
               <p className="text-4xl font-black">{employee.present_days}</p>
-              <p className="text-xs font-bold text-muted-foreground mt-1 lowercase">Log instances detected</p>
+              <p className="text-xs font-bold text-muted-foreground mt-1 lowercase">Total scan instances</p>
            </Card>
 
            <Card className="rounded-[2.5rem] border-muted shadow-lg bg-background p-8 group hover:border-blue-500/30 transition-all duration-500">
@@ -306,10 +306,10 @@ export default function EmployeeDetailPage() {
                  <div className="w-14 h-14 rounded-2xl bg-blue-500/10 flex items-center justify-center text-blue-500 group-hover:bg-blue-500 group-hover:text-white transition-all">
                     <Calendar className="w-7 h-7" />
                  </div>
-                 <p className="text-[10px] font-black text-muted-foreground uppercase tracking-widest">Cycle</p>
+                 <p className="text-[10px] font-black text-muted-foreground uppercase tracking-widest">Total Days</p>
               </div>
               <p className="text-4xl font-black">{employee.total_days}</p>
-              <p className="text-xs font-bold text-muted-foreground mt-1 lowercase">Total operative days</p>
+              <p className="text-xs font-bold text-muted-foreground mt-1 lowercase">Days in this month</p>
            </Card>
 
            <Card className="rounded-[2.5rem] border-muted shadow-lg bg-background p-8 group hover:border-primary/30 transition-all duration-500">
@@ -317,10 +317,10 @@ export default function EmployeeDetailPage() {
                  <div className="w-14 h-14 rounded-2xl bg-primary/10 flex items-center justify-center text-primary group-hover:bg-primary group-hover:text-white transition-all">
                     <TrendingUp className="w-7 h-7" />
                  </div>
-                 <p className="text-[10px] font-black text-muted-foreground uppercase tracking-widest">Efficiency</p>
+                 <p className="text-[10px] font-black text-muted-foreground uppercase tracking-widest">Attendance Rate</p>
               </div>
               <p className="text-4xl font-black">{employee.attendance_rate}%</p>
-              <p className="text-xs font-bold text-muted-foreground mt-1 lowercase">Sync rate reliability</p>
+              <p className="text-xs font-bold text-muted-foreground mt-1 lowercase">Percentage of days present</p>
            </Card>
 
            <Card className={`rounded-[2.5rem] border-muted shadow-lg bg-background p-8 group hover:border-foreground/30 transition-all duration-500`}>
@@ -328,10 +328,10 @@ export default function EmployeeDetailPage() {
                  <div className={`w-14 h-14 rounded-2xl ${status.color.split(' ')[0]} flex items-center justify-center text-white`}>
                     <ShieldAlert className="w-7 h-7" />
                  </div>
-                 <p className="text-[10px] font-black text-muted-foreground uppercase tracking-widest">Status</p>
+                 <p className="text-[10px] font-black text-muted-foreground uppercase tracking-widest">Rating</p>
               </div>
               <p className="text-2xl font-black uppercase tracking-tighter">{status.label}</p>
-              <p className="text-xs font-bold text-muted-foreground mt-2 lowercase">Health classification</p>
+              <p className="text-xs font-bold text-muted-foreground mt-2 lowercase">Overall attendance rating</p>
            </Card>
         </div>
 
@@ -340,9 +340,9 @@ export default function EmployeeDetailPage() {
            <div className="flex items-center justify-between mb-8">
               <h3 className="text-2xl font-black tracking-tight flex items-center gap-4">
                  <div className="w-1.5 h-8 bg-primary rounded-full" />
-                 Engagement Matrix
+                 Attendance Progress
               </h3>
-              <p className="text-muted-foreground font-bold">{employee.attendance_rate}% OPTIMIZATION</p>
+              <p className="text-muted-foreground font-bold">{employee.attendance_rate}% ATTENDANCE</p>
            </div>
            
            <div className="relative pt-4">
@@ -353,9 +353,9 @@ export default function EmployeeDetailPage() {
                  />
               </div>
               <div className="flex justify-between mt-4 text-[10px] font-black text-muted-foreground uppercase tracking-[0.2em]">
-                 <span>SYSTEM MIN (0%)</span>
-                 <span>NOMINAL (50%)</span>
-                 <span>ZENITH (100%)</span>
+                 <span>LOW (0%)</span>
+                 <span>AVERAGE (50%)</span>
+                 <span>PERFECT (100%)</span>
               </div>
            </div>
         </Card>
@@ -365,9 +365,9 @@ export default function EmployeeDetailPage() {
            <CardHeader className="p-10 border-b border-muted bg-muted/20">
               <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
                  <div>
-                    <CardTitle className="text-2xl font-black tracking-tight">Telemetry Stream</CardTitle>
+                    <CardTitle className="text-2xl font-black tracking-tight">Attendance History</CardTitle>
                     <CardDescription className="text-muted-foreground font-bold mt-1 uppercase tracking-widest text-[10px]">
-                       Analyzing {months[selectedMonth]} {selectedYear} / {employee.recent_logs.length} Vectors Detected
+                       Showing history for {months[selectedMonth]} {selectedYear} / {employee.recent_logs.length} Scans Recorded
                     </CardDescription>
                  </div>
                  <div className="md:hidden flex gap-4">
@@ -393,7 +393,7 @@ export default function EmployeeDetailPage() {
                           <Clock className="w-6 h-6" />
                         </div>
                         <div>
-                          <p className="text-lg font-black text-foreground">Attendance Sequential Event</p>
+                          <p className="text-lg font-black text-foreground">Attendance Scan</p>
                           <p className="text-sm font-bold text-muted-foreground flex items-center gap-2 mt-1">
                              <Calendar className="w-4 h-4" />
                              {formatCompanyDate(log.timestamp, true)}
@@ -405,7 +405,7 @@ export default function EmployeeDetailPage() {
                       </div>
                       <div className="text-right">
                          <Badge variant="outline" className="rounded-lg font-black text-[10px] tracking-widest bg-muted/50 border-muted-foreground/20 text-muted-foreground px-4 py-2">
-                            VECTOR_ID: #{log.id}
+                            SCAN_ID: #{log.id}
                          </Badge>
                       </div>
                     </div>
@@ -415,8 +415,8 @@ export default function EmployeeDetailPage() {
                     <div className="w-24 h-24 bg-muted/50 rounded-full flex items-center justify-center mx-auto mb-8 border border-muted">
                       <AlertCircle className="w-10 h-10 opacity-20" />
                     </div>
-                    <h4 className="text-2xl font-black tracking-tight mb-2">Null Vector Space</h4>
-                    <p className="font-medium text-lg opacity-70">No telemetry data detected within this chronal window.</p>
+                    <h4 className="text-2xl font-black tracking-tight mb-2">No Records Found</h4>
+                    <p className="font-medium text-lg opacity-70">No attendance logs found for this period.</p>
                   </div>
                 )}
               </div>

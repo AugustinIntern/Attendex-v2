@@ -237,7 +237,7 @@ export default function StatisticsPage() {
   const periods: { id: Period; label: string; icon: any }[] = [
     { id: "week", label: "PHASE: WEEK", icon: CalendarDays },
     { id: "month", label: "PHASE: MONTH", icon: CalendarRange },
-    { id: "year", label: "PHASE: YEAR", icon: CalendarClock },
+    { id: "year", label: "YEAR", icon: CalendarClock },
   ];
 
   return (
@@ -247,14 +247,14 @@ export default function StatisticsPage() {
         <div className="flex flex-col md:flex-row md:items-end justify-between gap-8">
           <div>
              <div className="flex items-center gap-3 mb-2">
-                <Badge variant="outline" className="rounded-full border-primary/30 text-primary font-black text-[10px] tracking-widest px-4">SYSTEM ANALYTICS</Badge>
+                <Badge variant="outline" className="rounded-full border-primary/30 text-primary font-black text-[10px] tracking-widest px-4">ANALYSIS</Badge>
                 <div className="h-1 w-12 bg-primary/20 rounded-full" />
              </div>
             <h1 className="text-5xl font-extrabold text-foreground tracking-tighter">
-              Performance Matrix
+              Attendance Statistics
             </h1>
             <p className="text-muted-foreground mt-2 font-medium max-w-lg">
-              Advanced telemetry data processing for workforce optimization and attendance tracking.
+              Overview of attendance trends and employee presence.
             </p>
           </div>
 
@@ -291,7 +291,7 @@ export default function StatisticsPage() {
               onClick={fetchData}
               className="mt-6 h-12 px-8 rounded-xl font-black text-xs tracking-widest bg-destructive hover:bg-destructive/90"
             >
-              RE-ATTEMPT SYNC
+              TRY AGAIN
             </Button>
           </Card>
         ) : (
@@ -305,7 +305,7 @@ export default function StatisticsPage() {
                  <div className="w-14 h-14 rounded-2xl bg-emerald-500/10 flex items-center justify-center text-emerald-500 mb-6 group-hover:bg-emerald-500 group-hover:text-white transition-all">
                     <Target className="w-7 h-7" />
                  </div>
-                 <p className="text-[10px] font-black text-muted-foreground uppercase tracking-widest mb-1">Efficiency Rate</p>
+                 <p className="text-[10px] font-black text-muted-foreground uppercase tracking-widest mb-1">Attendance Rate</p>
                  <div className="flex items-end gap-3">
                     <h3 className="text-4xl font-black tracking-tighter">{statsData?.attendanceRate}%</h3>
                     <Badge className="mb-1 bg-emerald-500/20 text-emerald-600 border-none font-black text-[9px] tracking-tighter">
@@ -319,9 +319,9 @@ export default function StatisticsPage() {
                  <div className="w-14 h-14 rounded-2xl bg-primary/10 flex items-center justify-center text-primary mb-6 group-hover:bg-primary group-hover:text-white transition-all">
                     <Activity className="w-7 h-7" />
                  </div>
-                 <p className="text-[10px] font-black text-muted-foreground uppercase tracking-widest mb-1">Event Load</p>
+                 <p className="text-[10px] font-black text-muted-foreground uppercase tracking-widest mb-1">Total Scans</p>
                  <h3 className="text-4xl font-black tracking-tighter">{statsData?.totalCheckins}</h3>
-                 <p className="text-[10px] font-bold text-muted-foreground mt-2 italic lowercase tracking-wide">Telemetry packets processed</p>
+                 <p className="text-[10px] font-bold text-muted-foreground mt-2 italic lowercase tracking-wide">Attendance logs recorded</p>
               </Card>
 
               <Card className="rounded-[2.5rem] border-muted shadow-xl bg-background p-8 group overflow-hidden">
@@ -330,16 +330,16 @@ export default function StatisticsPage() {
                  </div>
                  <p className="text-[10px] font-black text-muted-foreground uppercase tracking-widest mb-1">Avg Presence</p>
                  <h3 className="text-4xl font-black tracking-tighter">{statsData?.avgDailyPresent}</h3>
-                 <p className="text-[10px] font-bold text-muted-foreground mt-2 italic lowercase tracking-wide">Mean daily workforce sync</p>
+                 <p className="text-[10px] font-bold text-muted-foreground mt-2 italic lowercase tracking-wide">Average daily attendance</p>
               </Card>
 
               <Card className="rounded-[2.5rem] border-muted shadow-xl bg-background p-8 group overflow-hidden">
                  <div className="w-14 h-14 rounded-2xl bg-purple-500/10 flex items-center justify-center text-purple-500 mb-6 group-hover:bg-purple-500 group-hover:text-white transition-all">
                     <Zap className="w-7 h-7" />
                  </div>
-                 <p className="text-[10px] font-black text-muted-foreground uppercase tracking-widest mb-1">Impact Group</p>
+                 <p className="text-[10px] font-black text-muted-foreground uppercase tracking-widest mb-1">Active Employees</p>
                  <h3 className="text-4xl font-black tracking-tighter">{statsData?.activeEmployees}</h3>
-                 <p className="text-[10px] font-bold text-muted-foreground mt-2 italic lowercase tracking-wide">Core contributing personnel</p>
+                 <p className="text-[10px] font-bold text-muted-foreground mt-2 italic lowercase tracking-wide">Employees scanned</p>
               </Card>
             </div>
 
@@ -350,16 +350,16 @@ export default function StatisticsPage() {
                   <div>
                     <h2 className="text-3xl font-black tracking-tight flex items-center gap-4">
                        <div className="w-1.5 h-8 bg-primary rounded-full shadow-[0_0_15px_rgba(var(--primary),0.5)]" />
-                       Strategic Trend
+                       Attendance Trends
                     </h2>
                     <p className="text-muted-foreground font-bold text-xs uppercase tracking-widest mt-2">
-                      Volumetric analysis of personnel presence over time
+                       Comparison of present vs absent employees
                     </p>
                   </div>
                   <div className="hidden sm:flex items-center gap-6">
                     <div className="flex items-center gap-2">
                       <div className="w-1.5 h-1.5 rounded-full bg-primary" />
-                      <span className="text-[9px] font-black text-muted-foreground uppercase tracking-widest">Presence Index</span>
+                       <span className="text-[9px] font-black text-muted-foreground uppercase tracking-widest">Presence</span>
                     </div>
                   </div>
                 </div>
@@ -417,10 +417,10 @@ export default function StatisticsPage() {
 
               <Card className="rounded-[3.5rem] border-muted bg-background shadow-2xl p-10 flex flex-col group">
                 <h2 className="text-2xl font-black tracking-tight mb-2 group-hover:text-primary transition-colors">
-                  Check-in Density
+                  Scan Activity
                 </h2>
                 <p className="text-muted-foreground font-medium text-sm mb-10 lowercase italic">
-                  Intensity mapping of log activity
+                  Activity over time
                 </p>
                 <div className="flex-1 mt-4" style={{ width: '100%', minHeight: '250px' }}>
                   {isMounted && (
@@ -470,11 +470,11 @@ export default function StatisticsPage() {
                             <Clock className="w-5 h-5" />
                          </div>
                          <div>
-                            <p className="text-[10px] font-black text-muted-foreground uppercase tracking-widest">Peak Intensity</p>
+                             <p className="text-[10px] font-black text-muted-foreground uppercase tracking-widest">Peak Time</p>
                             <p className="text-lg font-black tracking-tight">08:44 AM</p>
                          </div>
                       </div>
-                      <Badge variant="outline" className="h-8 rounded-lg font-black text-[9px] tracking-widest bg-emerald-500/10 text-emerald-500 border-none px-3">HEALTHY_SYNC</Badge>
+                       <Badge variant="outline" className="h-8 rounded-lg font-black text-[9px] tracking-widest bg-emerald-500/10 text-emerald-500 border-none px-3">SYNCED</Badge>
                    </div>
                 </div>
               </Card>
@@ -484,9 +484,9 @@ export default function StatisticsPage() {
             <Card className="rounded-[3.5rem] border-muted bg-background shadow-2xl overflow-hidden">
                <CardHeader className="p-12 border-b border-muted bg-muted/5 flex flex-row items-center justify-between">
                   <div>
-                    <CardTitle className="text-3xl font-black tracking-tight">Granular Intelligence</CardTitle>
+                    <CardTitle className="text-3xl font-black tracking-tight">Monthly Overview</CardTitle>
                     <CardDescription className="text-muted-foreground font-bold mt-2 uppercase tracking-widest text-xs">
-                       Chronological event analysis matrix
+                       Detailed daily breakdown
                     </CardDescription>
                   </div>
                   <Button variant="outline" className="h-12 rounded-xl border-muted bg-background hover:bg-muted/30 font-black text-[10px] tracking-widest">
@@ -498,11 +498,11 @@ export default function StatisticsPage() {
                <Table>
                  <TableHeader className="bg-muted/20 border-b border-muted">
                    <TableRow className="h-20 hover:bg-transparent">
-                     <TableHead className="px-12 font-black uppercase text-xs tracking-[0.2em]">Temporal Node</TableHead>
-                     <TableHead className="font-black uppercase text-xs tracking-[0.2em] text-emerald-500">Personnel Present</TableHead>
-                     <TableHead className="font-black uppercase text-xs tracking-[0.2em] text-destructive">Absence Nodes</TableHead>
-                     <TableHead className="font-black uppercase text-xs tracking-[0.2em]">Signal Events</TableHead>
-                     <TableHead className="px-12 font-black uppercase text-xs tracking-[0.2em] text-right">Reliability Index</TableHead>
+                     <TableHead className="px-12 font-black uppercase text-xs tracking-[0.2em]">Date</TableHead>
+                     <TableHead className="font-black uppercase text-xs tracking-[0.2em] text-emerald-500">Employees Present</TableHead>
+                     <TableHead className="font-black uppercase text-xs tracking-[0.2em] text-destructive">Absences</TableHead>
+                     <TableHead className="font-black uppercase text-xs tracking-[0.2em]">Scans</TableHead>
+                     <TableHead className="px-12 font-black uppercase text-xs tracking-[0.2em] text-right">Status</TableHead>
                    </TableRow>
                  </TableHeader>
                  <TableBody>
@@ -518,7 +518,7 @@ export default function StatisticsPage() {
                           {day.absent}
                        </TableCell>
                        <TableCell className="font-medium text-muted-foreground">
-                          {day.checkins} Signals
+                           {day.checkins} Scans
                        </TableCell>
                        <TableCell className="px-12 text-right">
                           <Badge 
@@ -529,7 +529,7 @@ export default function StatisticsPage() {
                               : 'bg-orange-500 text-white'
                             }`}
                           >
-                            {day.present / employeeCount >= 0.8 ? 'OPTIMAL' : 'DEVIATION'}
+                             {day.present / employeeCount >= 0.8 ? 'EXCELLENT' : 'LOW'}
                           </Badge>
                        </TableCell>
                      </TableRow>

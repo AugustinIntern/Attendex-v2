@@ -119,10 +119,10 @@ export default function EmployeesPage() {
         <div className="flex flex-col md:flex-row md:items-end justify-between gap-6">
           <div>
             <h1 className="text-4xl font-extrabold text-foreground tracking-tight">
-              Workforce Overview
+              Employee Directory
             </h1>
             <p className="text-muted-foreground mt-2 font-medium">
-              Real-time monitoring and administrative management of personnel.
+              List of all active employees and their attendance stats.
             </p>
           </div>
 
@@ -131,7 +131,7 @@ export default function EmployeesPage() {
               <Users className="w-5 h-5 text-primary" />
               <div>
                 <p className="text-2xl font-black text-foreground leading-none">{employees.length}</p>
-                <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest mt-1">Personnel</p>
+                <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest mt-1">Employees</p>
               </div>
             </Card>
           </div>
@@ -141,7 +141,7 @@ export default function EmployeesPage() {
           <Search className="absolute left-5 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground group-focus-within:text-primary transition-colors" />
           <Input
             type="text"
-            placeholder="Identity scan..."
+            placeholder="Search employees..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
             className="h-16 pl-14 pr-6 rounded-[1.25rem] bg-muted/30 border-muted focus:bg-background text-lg font-bold transition-all"
@@ -200,7 +200,7 @@ export default function EmployeesPage() {
                     {stats ? (
                       <div className="space-y-6">
                         <div className="flex justify-between items-center bg-muted/30 p-3 rounded-xl">
-                          <span className="text-[10px] font-black text-muted-foreground uppercase tracking-widest pl-2">Reliability</span>
+                          <span className="text-[10px] font-black text-muted-foreground uppercase tracking-widest pl-2">Attendance</span>
                           <Badge className={`rounded-lg font-black text-[10px] tracking-widest border-none ${status?.color} text-white`}>
                             {status?.label}
                           </Badge>
@@ -209,11 +209,11 @@ export default function EmployeesPage() {
                         <div className="grid grid-cols-2 gap-4">
                           <div className="bg-muted/10 p-4 rounded-2xl text-center">
                             <p className="text-2xl font-black">{stats.present_days}</p>
-                            <p className="text-[9px] font-bold text-muted-foreground uppercase tracking-widest mt-1">Days Logs</p>
+                            <p className="text-[9px] font-bold text-muted-foreground uppercase tracking-widest mt-1">Days Present</p>
                           </div>
                           <div className="bg-muted/10 p-4 rounded-2xl text-center">
                             <p className="text-2xl font-black">{Math.round(stats.attendance_rate)}%</p>
-                            <p className="text-[9px] font-bold text-muted-foreground uppercase tracking-widest mt-1">Duty Sync</p>
+                            <p className="text-[9px] font-bold text-muted-foreground uppercase tracking-widest mt-1">Attendance</p>
                           </div>
                         </div>
 
@@ -229,7 +229,7 @@ export default function EmployeesPage() {
                     ) : (
                       <div className="p-8 text-center bg-muted/10 rounded-[1.5rem] border border-dashed border-muted">
                         <AlertCircle className="w-6 h-6 text-muted-foreground/30 mx-auto mb-2" />
-                        <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest">Awaiting Logs</p>
+                        <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest">No records yet</p>
                       </div>
                     )}
                   </CardContent>
@@ -245,10 +245,10 @@ export default function EmployeesPage() {
               <Search className="w-10 h-10 opacity-20" />
             </div>
             <h3 className="text-2xl font-black tracking-tight mb-2">
-              Identity Mismatch
+              No results found
             </h3>
             <p className="text-muted-foreground font-medium">
-              {searchTerm ? "No personnel records match these parameters." : "The workforce registry is currently offline."}
+              {searchTerm ? "No employees match your search." : "The employee list is currently empty."}
             </p>
           </div>
         )}

@@ -109,10 +109,10 @@ export default function PastDayPage() {
       <div className="flex flex-col md:flex-row md:items-end justify-between gap-6">
         <div>
           <h1 className="text-4xl font-extrabold text-foreground tracking-tight">
-            Historical Data
+            Past Attendance
           </h1>
           <p className="text-muted-foreground mt-2 font-medium">
-            Analyze and review past attendance telemetry.
+            View and search attendance records from previous days.
           </p>
         </div>
 
@@ -148,8 +148,8 @@ export default function PastDayPage() {
               <h2 className="text-3xl font-black text-foreground">{formattedDateLabel}</h2>
               <p className="text-muted-foreground mt-4 font-medium italic">
                 {selectedDate
-                  ? `Extraction complete for ${new Date(`${selectedDate}T12:00:00`).toLocaleDateString()}`
-                  : "Standby for date selection..."}
+                  ? `Loaded records for ${new Date(`${selectedDate}T12:00:00`).toLocaleDateString()}`
+                  : "Please select a date..."}
               </p>
            </CardContent>
         </Card>
@@ -196,7 +196,7 @@ export default function PastDayPage() {
         <CardHeader className="bg-muted/30 px-10 py-8 border-b border-muted">
            <CardTitle className="text-2xl font-black tracking-tight flex items-center gap-4">
               <div className="w-1.5 h-8 bg-primary rounded-full" />
-              Archives Analysis
+              Daily Attendance Log
            </CardTitle>
         </CardHeader>
 
@@ -212,26 +212,26 @@ export default function PastDayPage() {
                <div className="w-20 h-20 bg-muted rounded-full flex items-center justify-center mx-auto mb-6">
                   <Calendar className="w-10 h-10 opacity-20" />
                </div>
-              <p className="font-bold text-lg">System Standby</p>
-              <p className="mt-1 opacity-70">Initialize a date selection to extract data from archives.</p>
+              <p className="font-bold text-lg">Ready</p>
+              <p className="mt-1 opacity-70">Please select a date above to view its attendance records.</p>
             </div>
           ) : logs.length === 0 ? (
             <div className="p-20 text-center text-muted-foreground">
                <div className="w-20 h-20 bg-muted rounded-full flex items-center justify-center mx-auto mb-6">
                   <Clock className="w-10 h-10 opacity-20" />
                </div>
-              <p className="font-bold text-lg">Zero Records Found</p>
-              <p className="mt-1 opacity-70">No telemetry data was logged for {new Date(`${selectedDate}T12:00:00`).toLocaleDateString()}.</p>
+              <p className="font-bold text-lg">No Records Found</p>
+              <p className="mt-1 opacity-70">No attendance data was recorded for {new Date(`${selectedDate}T12:00:00`).toLocaleDateString()}.</p>
             </div>
           ) : (
             <div className="overflow-x-auto">
               <Table>
                 <TableHeader className="bg-muted/50">
                   <TableRow>
-                    <TableHead className="px-10 font-black h-16 uppercase text-xs tracking-[0.2em]">Employee Identity</TableHead>
+                    <TableHead className="px-10 font-black h-16 uppercase text-xs tracking-[0.2em]">Employee</TableHead>
                     <TableHead className="font-black uppercase text-xs tracking-[0.2em]">ID</TableHead>
-                    <TableHead className="font-black uppercase text-xs tracking-[0.2em]">Time Detected</TableHead>
-                    <TableHead className="px-10 font-black uppercase text-xs tracking-[0.2em] text-right">Event Status</TableHead>
+                    <TableHead className="font-black uppercase text-xs tracking-[0.2em]">Time</TableHead>
+                    <TableHead className="px-10 font-black uppercase text-xs tracking-[0.2em] text-right">Status</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>

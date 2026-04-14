@@ -119,10 +119,10 @@ export default function ArchivedEmployeesPage() {
           <div>
             <h1 className="text-5xl font-extrabold text-foreground tracking-tighter flex items-center gap-4">
               <Archive className="w-10 h-10 text-muted-foreground/40" />
-              Cold Storage
+              Archived Employees
             </h1>
             <p className="text-muted-foreground mt-2 font-medium">
-              Deactivated personnel records and historical telemetry.
+              Records of former employees and past attendance data.
             </p>
           </div>
 
@@ -215,7 +215,7 @@ export default function ArchivedEmployeesPage() {
                         {/* Status + rate in one row */}
                         <div className="flex items-center justify-between bg-muted/30 rounded-xl px-4 py-2.5 border border-muted/50">
                           <span className="text-[10px] font-black text-muted-foreground uppercase tracking-widest">
-                            Last Active
+                            Status
                           </span>
                           <Badge className={`text-[9px] font-black uppercase tracking-widest border rounded-lg px-3 py-1 shadow-none ${statusCfg?.cls}`}>
                             {statusCfg?.label}
@@ -229,7 +229,7 @@ export default function ArchivedEmployeesPage() {
                               {stats.present_days}
                             </p>
                             <p className="text-[9px] font-bold text-muted-foreground uppercase tracking-widest mt-0.5">
-                              Days Logged
+                              Days Present
                             </p>
                           </div>
                           <div className="bg-muted/20 rounded-xl p-3 text-center border border-muted/30">
@@ -237,7 +237,7 @@ export default function ArchivedEmployeesPage() {
                               {Math.round(stats.attendance_rate)}%
                             </p>
                             <p className="text-[9px] font-bold text-muted-foreground uppercase tracking-widest mt-0.5">
-                              Sync Rate
+                              Attendance
                             </p>
                           </div>
                         </div>

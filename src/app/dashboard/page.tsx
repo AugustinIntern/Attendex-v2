@@ -145,7 +145,7 @@ export default function DashboardPage() {
                   <p className="text-6xl font-black text-destructive">
                     {absenceCount}
                   </p>
-                  <p className="text-muted-foreground font-medium">unaccounted</p>
+                  <p className="text-muted-foreground font-medium">absent</p>
                 </div>
               </div>
               <div className="w-20 h-20 bg-destructive/10 rounded-[2.5rem] flex items-center justify-center -rotate-3 group-hover:rotate-0 transition-transform">
@@ -184,7 +184,7 @@ export default function DashboardPage() {
                   <Clock className="w-8 h-8 text-muted-foreground" />
                </div>
               <p className="text-muted-foreground font-medium">
-                No telemetry data received for today yet.
+                No attendance data received for today yet.
               </p>
             </div>
           ) : (
@@ -192,10 +192,10 @@ export default function DashboardPage() {
               <Table>
                 <TableHeader className="bg-muted/30">
                   <TableRow>
-                    <TableHead className="font-black h-14">Employee Name</TableHead>
-                    <TableHead className="font-black">Internal ID</TableHead>
-                    <TableHead className="font-black">Detection Time</TableHead>
-                    <TableHead className="font-black text-right">Activity Type</TableHead>
+                    <TableHead className="font-black h-14">Employee</TableHead>
+                    <TableHead className="font-black">ID</TableHead>
+                    <TableHead className="font-black">Time</TableHead>
+                    <TableHead className="font-black text-right">Status</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
