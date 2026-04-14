@@ -118,7 +118,7 @@ export default function StatisticsPage() {
   }, [fetchData]);
 
   const statsData = useMemo(() => {
-    if (loading || !logs || !logs.length) return null;
+    if (loading || !logs) return null;
 
     try {
       const now = getCompanyLocalTime(new Date());
@@ -425,7 +425,7 @@ export default function StatisticsPage() {
                 <div className="flex-1 mt-4" style={{ width: '100%', minHeight: '250px' }}>
                   {isMounted && (
                     <ResponsiveContainer width="100%" height={250}>
-                    <BarChart data={statsData?.displayChartData?.slice(-7)}>
+                    <BarChart data={statsData?.displayChartData}>
                       <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="var(--muted)" opacity={0.3} />
                       <XAxis 
                         dataKey="name" 
@@ -454,7 +454,7 @@ export default function StatisticsPage() {
                         radius={[12, 12, 0, 0]} 
                         animationDuration={2500}
                       >
-                         {statsData?.displayChartData?.slice(-7).map((entry, index) => (
+                         {statsData?.displayChartData?.map((entry, index) => (
                           <Cell key={`cell-${index}`} fillOpacity={0.4 + (index * 0.1)} />
                         ))}
                       </Bar>
@@ -484,7 +484,9 @@ export default function StatisticsPage() {
             <Card className="rounded-[3.5rem] border-muted bg-background shadow-2xl overflow-hidden">
                <CardHeader className="p-12 border-b border-muted bg-muted/5 flex flex-row items-center justify-between">
                   <div>
-                    <CardTitle className="text-3xl font-black tracking-tight">Monthly Overview</CardTitle>
+                    <CardTitle className="text-3xl font-black tracking-tight">
+                       {period === "week" ? "Weekly" : period === "month" ? "Monthly" : "Yearly"} Overview
+                    </CardTitle>
                     <CardDescription className="text-muted-foreground font-bold mt-2 uppercase tracking-widest text-xs">
                        Detailed daily breakdown
                     </CardDescription>
@@ -506,7 +508,7 @@ export default function StatisticsPage() {
                    </TableRow>
                  </TableHeader>
                  <TableBody>
-                   {statsData?.displayChartData?.slice(-7).reverse().map((day, idx) => (
+                   {statsData?.displayChartData?.slice().reverse().map((day, idx) => (
                      <TableRow key={idx} className="h-24 hover:bg-muted/20 transition-all group">
                        <TableCell className="px-12 font-black text-lg text-foreground group-hover:text-primary transition-colors">
                           {day.name}
