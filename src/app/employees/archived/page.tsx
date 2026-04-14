@@ -214,12 +214,7 @@ export default function ArchivedEmployeesPage() {
                       <div className="space-y-3">
                         {/* Status + rate in one row */}
                         <div className="flex items-center justify-between bg-muted/30 rounded-xl px-4 py-2.5 border border-muted/50">
-                          <span className="text-[10px] font-black text-muted-foreground uppercase tracking-widest">
-                            Status
-                          </span>
-                          <Badge className={`text-[9px] font-black uppercase tracking-widest border rounded-lg px-3 py-1 shadow-none ${statusCfg?.cls}`}>
-                            {statusCfg?.label}
-                          </Badge>
+                          <span className="text-[10px] font-black text-muted-foreground uppercase tracking-widest">Attendance Summary</span>
                         </div>
 
                         {/* Metrics */}
@@ -242,13 +237,7 @@ export default function ArchivedEmployeesPage() {
                           </div>
                         </div>
 
-                        {/* Progress bar */}
-                        <div className="w-full bg-muted/30 rounded-full h-1 overflow-hidden">
-                          <div
-                            className="bg-muted-foreground/30 group-hover:bg-primary h-full transition-all duration-700 ease-out"
-                            style={{ width: `${Math.min(stats.attendance_rate, 100)}%` }}
-                          />
-                        </div>
+
                       </div>
                     ) : (
                       <div className="flex items-center gap-3 p-3 bg-muted/20 rounded-xl border border-dashed border-muted-foreground/10">
