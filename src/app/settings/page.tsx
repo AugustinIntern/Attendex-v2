@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import AppLayout from "@/components/AppLayout";
-import { RefreshCw, CheckCircle2, AlertCircle, Info, Database, ShieldCheck, Zap } from "lucide-react";
+import { RefreshCw, CheckCircle2, AlertCircle, Info, Database, ShieldCheck, Zap, HelpCircle, ArrowRight } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -185,6 +185,64 @@ export default function SettingsPage() {
                            * DATA IS UPDATED AUTOMATICALLY.
                         </p>
                      )}
+                  </div>
+               </CardContent>
+            </Card>
+ 
+            {/* Guide Section */}
+            <Card className="rounded-[3rem] border-muted bg-background shadow-2xl overflow-hidden group">
+               <CardHeader className="p-10 border-b border-muted bg-muted/5">
+                  <div className="flex items-center gap-6">
+                     <div className="w-16 h-16 rounded-3xl bg-amber-500/10 flex items-center justify-center">
+                        <HelpCircle className="text-amber-500 w-8 h-8" />
+                     </div>
+                     <div>
+                        <CardTitle className="text-3xl font-black tracking-tight">How to Add a New Employee</CardTitle>
+                        <CardDescription className="text-muted-foreground font-bold text-sm mt-1 uppercase tracking-widest">Onboarding Workflow</CardDescription>
+                     </div>
+                  </div>
+               </CardHeader>
+               <CardContent className="p-10">
+                  <div className="space-y-10">
+                     {[
+                        {
+                           step: "Step 1",
+                           title: "Setup Zoho Profile",
+                           desc: "Add the employee in Zoho People first, making sure their Employee ID is set correctly."
+                        },
+                        {
+                           step: "Step 2",
+                           title: "Synchronize Data",
+                           desc: "Come back to this app and click the \"Sync from Zoho People\" button. This will automatically create the employee in the system."
+                        },
+                        {
+                           step: "Step 3",
+                           title: "Verify Employee Record",
+                           desc: "Go to the Active Employees page to find the newly added employee and check their details."
+                        },
+                        {
+                           step: "Step 4",
+                           title: "Biometric Registration",
+                           desc: "Go to the employee's details page to get their Employee Code and User ID, then use these two values to register the employee on the biometric device."
+                        }
+                     ].map((item, i) => (
+                        <div key={i} className="flex gap-8 relative group/step">
+                           <div className="flex flex-col items-center shrink-0">
+                              <div className="w-12 h-12 rounded-2xl bg-muted border border-muted-foreground/10 flex items-center justify-center font-black text-xs text-muted-foreground group-hover/step:bg-primary group-hover/step:text-primary-foreground group-hover/step:border-primary transition-all duration-300">
+                                 {i + 1}
+                              </div>
+                              {i < 3 && <div className="w-px h-full bg-muted-foreground/10 mt-4 group-hover/step:bg-primary/30 transition-colors" />}
+                           </div>
+                           <div className="pb-4">
+                              <h4 className="text-[10px] font-black text-primary uppercase tracking-[0.2em] mb-2">{item.step}</h4>
+                              <h3 className="text-xl font-black text-foreground mb-2">{item.title}</h3>
+                              <p className="text-muted-foreground font-medium leading-relaxed max-w-2xl">{item.desc}</p>
+                           </div>
+                           <div className="ml-auto items-center hidden md:flex opacity-0 group-hover/step:opacity-100 transition-opacity">
+                              <ArrowRight className="w-5 h-5 text-primary" />
+                           </div>
+                        </div>
+                     ))}
                   </div>
                </CardContent>
             </Card>
