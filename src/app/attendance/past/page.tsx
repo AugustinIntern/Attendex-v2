@@ -123,6 +123,7 @@ export default function PastDayPage() {
   const presentCount = uniquePresentIds.size;
   const absenceCount = employeeCount - presentCount;
 
+  const handleEditClick = (log: AttendanceLog) => {
     const logDate = new Date(log.timestamp);
     const timeStr = format(logDate, "HH:mm");
     const dateStr = format(logDate, "yyyy-MM-dd");
