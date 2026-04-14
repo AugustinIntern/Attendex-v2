@@ -231,6 +231,7 @@ export default function PastDayPage() {
                     <TableHead className="px-10 font-black h-16 uppercase text-xs tracking-[0.2em]">Employee</TableHead>
                     <TableHead className="font-black uppercase text-xs tracking-[0.2em]">ID</TableHead>
                     <TableHead className="font-black uppercase text-xs tracking-[0.2em]">Time</TableHead>
+                    <TableHead className="font-black uppercase text-xs tracking-[0.2em]">Synthetic</TableHead>
                     <TableHead className="px-10 font-black uppercase text-xs tracking-[0.2em] text-right">Status</TableHead>
                   </TableRow>
                 </TableHeader>
@@ -253,6 +254,13 @@ export default function PastDayPage() {
                       </TableCell>
                       <TableCell className="text-muted-foreground font-semibold">
                         {formatCompanyTime(log.timestamp)}
+                      </TableCell>
+                      <TableCell className="font-mono text-xs font-bold">
+                        {log.device_ip === "synthetic" ? (
+                          <Badge variant="outline" className="text-amber-500 border-amber-500/20 bg-amber-500/5 font-black uppercase tracking-tighter">Yes</Badge>
+                        ) : (
+                          <span className="text-muted-foreground opacity-50 pl-2">No</span>
+                        )}
                       </TableCell>
                       <TableCell className="px-10 text-right">
                         <Badge
