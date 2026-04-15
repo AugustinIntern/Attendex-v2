@@ -160,7 +160,8 @@ export default function PastDayPage() {
         .from("attendance_logs")
         .update({
           timestamp: newTimestamp,
-          device_ip: newDeviceIp
+          device_ip: newDeviceIp,
+          synced_to_zoho: false
         })
         .eq("id", editingLog.id);
 
