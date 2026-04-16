@@ -18,7 +18,7 @@ export default function SettingsPage() {
   const [isRateLimited, setIsRateLimited] = useState(false);
   
   // API Usage State
-  const [usage, setUsage] = useState<{ count: number; last_updated: string } | null>(null);
+  const [usage, setUsage] = useState<{ count: number; updated_at: string } | null>(null);
   const [loadingUsage, setLoadingUsage] = useState(true);
   const DAILY_LIMIT = 10000;
 
@@ -41,20 +41,20 @@ export default function SettingsPage() {
         
         const { data, error } = await supabase
           .from("api_usage")
-          .select("usage_count, last_updated")
+          .select("call_count, updated_at")
           .eq("date", today)
-          .single();
+          .limit(1);
 
         if (error) {
-          if (error.code !== 'PGRST116') { // Ignore "no rows found" error
-            console.error("Error fetching API usage:", error);
-          }
+          console.error("Error fetching API usage:", error);
           setUsage(null);
-        } else if (data) {
+        } else if (data && data.length > 0) {
           setUsage({
-            count: data.usage_count,
-            last_updated: data.last_updated
+            count: data[0].call_count,
+            updated_at: data[0].updated_at
           });
+        } else {
+          setUsage(null);
         }
       } catch (err) {
         console.error("API usage fetch error:", err);
@@ -291,7 +291,7 @@ export default function SettingsPage() {
                                {(usage?.count || 0) >= DAILY_LIMIT ? "Full Capacity" : "Status: Operational"}
                             </span>
                             <span className="text-muted-foreground opacity-50">
-                               Updated {usage?.last_updated ? new Date(usage.last_updated).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : "Recently"}
+                               Updated {usage?.updated_at ? new Date(usage.updated_at).toLocaleString() : "Recently"}
                             </span>
                          </div>
                       </div>
