@@ -2,10 +2,11 @@
 
 import { useState, useEffect } from "react";
 import AppLayout from "@/components/AppLayout";
-import { RefreshCw, CheckCircle2, AlertCircle, Info, Database, ShieldCheck, Zap, HelpCircle, ArrowRight } from "lucide-react";
+import { RefreshCw, CheckCircle2, AlertCircle, Info, Database, ShieldCheck, Zap, HelpCircle, ArrowRight, Activity } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { supabase } from "@/lib/supabase";
 
 const RATE_LIMIT_HOURS = 4;
 const RATE_LIMIT_MS = RATE_LIMIT_HOURS * 60 * 60 * 1000;
@@ -15,6 +16,11 @@ export default function SettingsPage() {
   const [lastSyncTime, setLastSyncTime] = useState<number | null>(null);
   const [nextSyncTime, setNextSyncTime] = useState<number | null>(null);
   const [isRateLimited, setIsRateLimited] = useState(false);
+  
+  // API Usage State
+  const [usage, setUsage] = useState<{ count: number; last_updated: string } | null>(null);
+  const [loadingUsage, setLoadingUsage] = useState(true);
+  const DAILY_LIMIT = 10000;
 
   useEffect(() => {
     const storedTime = localStorage.getItem("lastZohoSync");
@@ -26,6 +32,41 @@ export default function SettingsPage() {
         setNextSyncTime(time + RATE_LIMIT_MS);
       }
     }
+
+    // Fetch API Usage
+    const fetchUsage = async () => {
+      try {
+        setLoadingUsage(true);
+        const today = new Date().toISOString().split('T')[0];
+        
+        const { data, error } = await supabase
+          .from("api_usage")
+          .select("usage_count, last_updated")
+          .eq("date", today)
+          .single();
+
+        if (error) {
+          if (error.code !== 'PGRST116') { // Ignore "no rows found" error
+            console.error("Error fetching API usage:", error);
+          }
+          setUsage(null);
+        } else if (data) {
+          setUsage({
+            count: data.usage_count,
+            last_updated: data.last_updated
+          });
+        }
+      } catch (err) {
+        console.error("API usage fetch error:", err);
+      } finally {
+        setLoadingUsage(false);
+      }
+    };
+
+    fetchUsage();
+    // Refresh usage every 5 minutes
+    const interval = setInterval(fetchUsage, 5 * 60 * 1000);
+    return () => clearInterval(interval);
   }, []);
 
   const [syncResult, setSyncResult] = useState<{
@@ -192,6 +233,72 @@ export default function SettingsPage() {
 
           {/* Sidebar Area */}
           <div className="space-y-10">
+             {/* API Usage Section */}
+             <Card className="bg-background border-muted rounded-[2.5rem] overflow-hidden shadow-2xl relative group">
+                <CardHeader className="p-8 border-b border-muted bg-muted/5">
+                   <div className="flex items-center gap-4">
+                      <div className="w-12 h-12 rounded-2xl bg-primary/10 flex items-center justify-center">
+                         <Activity className="text-primary w-6 h-6" />
+                      </div>
+                      <div>
+                         <CardTitle className="text-xl font-black tracking-tight leading-tight">API Usage</CardTitle>
+                         <CardDescription className="text-muted-foreground font-black text-[9px] uppercase tracking-widest mt-0.5">Zoho People Credits</CardDescription>
+                      </div>
+                   </div>
+                </CardHeader>
+                <CardContent className="p-8">
+                   {loadingUsage ? (
+                      <div className="space-y-4 py-4">
+                         <div className="h-4 w-3/4 bg-muted animate-pulse rounded-full" />
+                         <div className="h-2 w-full bg-muted animate-pulse rounded-full" />
+                         <div className="h-3 w-1/2 bg-muted animate-pulse rounded-full" />
+                      </div>
+                   ) : (
+                      <div className="space-y-6">
+                         <div className="flex justify-between items-end">
+                            <div>
+                               <p className="text-3xl font-black tracking-tighter text-foreground">
+                                  {usage?.count?.toLocaleString() || "0"}
+                               </p>
+                               <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest mt-1">
+                                  Credits used today
+                               </p>
+                            </div>
+                            <div className="text-right">
+                               <p className="text-xs font-black text-muted-foreground opacity-40">
+                                  LIMIT: {DAILY_LIMIT.toLocaleString()}
+                               </p>
+                            </div>
+                         </div>
+
+                         <div className="w-full h-3 bg-muted rounded-full overflow-hidden">
+                            <div 
+                               className={`h-full transition-all duration-1000 ${
+                                  (usage?.count || 0) < DAILY_LIMIT * 0.5 
+                                     ? "bg-emerald-500" 
+                                     : (usage?.count || 0) < DAILY_LIMIT * 0.85 
+                                        ? "bg-amber-500" 
+                                        : "bg-destructive"
+                               }`}
+                               style={{ width: `${Math.min(((usage?.count || 0) / DAILY_LIMIT) * 100, 100)}%` }}
+                            />
+                         </div>
+
+                         <div className="flex items-center justify-between text-[10px] font-bold uppercase tracking-widest">
+                            <span className={
+                               (usage?.count || 0) < DAILY_LIMIT * 0.85 ? "text-emerald-500" : "text-destructive"
+                            }>
+                               {(usage?.count || 0) >= DAILY_LIMIT ? "Full Capacity" : "Status: Operational"}
+                            </span>
+                            <span className="text-muted-foreground opacity-50">
+                               Updated {usage?.last_updated ? new Date(usage.last_updated).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : "Recently"}
+                            </span>
+                         </div>
+                      </div>
+                   )}
+                </CardContent>
+             </Card>
+
              <Card className="bg-background border-muted rounded-[2.5rem] overflow-hidden shadow-2xl shadow-primary/10 group">
                 <CardHeader className="p-8 border-b border-muted bg-muted/5">
                    <div className="flex items-center gap-4">
