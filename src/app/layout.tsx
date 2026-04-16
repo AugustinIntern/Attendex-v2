@@ -3,6 +3,7 @@ import { Geist, Geist_Mono, Inter } from "next/font/google";
 import "./globals.css";
 import { AuthProvider } from "@/lib/auth-context";
 import { cn } from "@/lib/utils";
+import { SpeedInsights } from "@vercel/speed-insights/next";
 
 const inter = Inter({subsets:['latin'],variable:'--font-sans'});
 
@@ -39,6 +40,7 @@ export default function RootLayout({
           <TooltipProvider>
             {children}
             <Toaster />
+            <SpeedInsights />
           </TooltipProvider>
         </AuthProvider>
       </body>
