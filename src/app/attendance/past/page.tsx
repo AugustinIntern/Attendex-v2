@@ -11,7 +11,7 @@ import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Calendar as CalendarComponent } from "@/components/ui/calendar";
-import { Calendar, CheckCircle2, XCircle, Clock, Edit2 } from "lucide-react";
+import { Calendar, CheckCircle2, XCircle, Clock } from "lucide-react";
 import {
   Dialog,
   DialogContent,
@@ -20,7 +20,6 @@ import {
   DialogFooter,
   DialogDescription,
 } from "@/components/ui/dialog";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
@@ -50,7 +49,6 @@ export default function PastDayPage() {
   // Edit State
   const [editingLog, setEditingLog] = useState<AttendanceLog | null>(null);
   const [editTime, setEditTime] = useState("");
-  const [editType, setEditType] = useState("");
   const [isSaving, setIsSaving] = useState(false);
   const [editDate, setEditDate] = useState("");
 
@@ -135,12 +133,6 @@ export default function PastDayPage() {
 
     setEditTime(`${hh}:${mm}`);
     setEditDate(`${y}-${m}-${d}`);
-    
-    // Map device_ip to record type
-    if (log.device_ip === "synthetic") setEditType("Synthetic");
-    else if (log.device_ip === "admin_fix") setEditType("Admin Fix");
-    else setEditType("Physical");
-    
     setEditingLog(log);
   };
 
@@ -148,19 +140,14 @@ export default function PastDayPage() {
     if (!editingLog) return;
     setIsSaving(true);
     try {
-      // 1. Combine Date and Time into Timestamp (Strictly UTC)
+      // Combine Date and Time into Timestamp (Strictly UTC)
       const newTimestamp = `${editDate}T${editTime}:00.000Z`;
-
-      // 2. Map type back to device_ip
-      let newDeviceIp = "192.168.68.52";
-      if (editType === "Synthetic") newDeviceIp = "synthetic";
-      else if (editType === "Admin Fix") newDeviceIp = "admin_fix";
 
       const { error } = await supabase
         .from("attendance_logs")
         .update({
           timestamp: newTimestamp,
-          device_ip: newDeviceIp,
+          device_ip: "admin_fix",
           synced_to_zoho_status: "false"
         })
         .eq("id", editingLog.id);
@@ -397,19 +384,6 @@ export default function PastDayPage() {
               </div>
             </div>
 
-            <div className="space-y-3">
-              <label className="text-[10px] font-black text-muted-foreground uppercase tracking-widest ml-1">Record Type</label>
-              <Select value={editType} onValueChange={setEditType}>
-                <SelectTrigger className="h-16 rounded-2xl bg-muted/30 border-muted focus:ring-primary font-bold text-lg px-6">
-                  <SelectValue placeholder="Select type" />
-                </SelectTrigger>
-                <SelectContent className="rounded-2xl border-muted bg-background shadow-2xl">
-                  <SelectItem value="Physical" className="font-bold py-3 focus:bg-primary/10">Physical Scan (Biometric)</SelectItem>
-                  <SelectItem value="Synthetic" className="font-bold py-3 focus:bg-primary/10">Synthetic (Automated)</SelectItem>
-                  <SelectItem value="Admin Fix" className="font-bold py-3 focus:bg-primary/10">Admin Fix (Manual)</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
           </div>
 
           <DialogFooter className="gap-4 flex-col sm:flex-row mt-4">
