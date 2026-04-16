@@ -8,15 +8,10 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { supabase } from "@/lib/supabase";
 
-const RATE_LIMIT_HOURS = 4;
-const RATE_LIMIT_MS = RATE_LIMIT_HOURS * 60 * 60 * 1000;
 const DAILY_LIMIT = 10000;
 
 export default function SettingsPage() {
   const [isSyncing, setIsSyncing] = useState(false);
-  const [lastSyncTime, setLastSyncTime] = useState<number | null>(null);
-  const [nextSyncTime, setNextSyncTime] = useState<number | null>(null);
-  const [isRateLimited, setIsRateLimited] = useState(false);
   const [syncResult, setSyncResult] = useState<{
     success: boolean;
     message: string;
@@ -28,16 +23,6 @@ export default function SettingsPage() {
   const [loadingUsage, setLoadingUsage] = useState(true);
 
   useEffect(() => {
-    const storedTime = localStorage.getItem("lastZohoSync");
-    if (storedTime) {
-      const time = parseInt(storedTime, 10);
-      setLastSyncTime(time);
-      if (Date.now() - time < RATE_LIMIT_MS) {
-        setIsRateLimited(true);
-        setNextSyncTime(time + RATE_LIMIT_MS);
-      }
-    }
-
     const fetchUsage = async () => {
       try {
         setLoadingUsage(true);
@@ -72,20 +57,38 @@ export default function SettingsPage() {
     try {
       setIsSyncing(true);
       setSyncResult(null);
+
+      // 1. Trigger the Zoho sync
       const response = await fetch("/api/employees/sync", { method: "POST" });
       const data = await response.json();
-      if (data.success) {
-        const now = Date.now();
-        localStorage.setItem("lastZohoSync", now.toString());
-        setLastSyncTime(now);
-        setIsRateLimited(true);
-        setNextSyncTime(now + RATE_LIMIT_MS);
-      }
+
       setSyncResult({
         success: data.success,
         message: data.success ? data.message : (data.error || "Failed to sync with Zoho People"),
         details: data.details,
       });
+
+      // 2. Increment api_usage call_count for today
+      const today = new Date().toISOString().split("T")[0];
+      const now = new Date().toISOString();
+
+      const { data: existing } = await supabase
+        .from("api_usage")
+        .select("call_count")
+        .eq("date", today)
+        .limit(1);
+
+      const currentCount = existing && existing.length > 0 ? existing[0].call_count : 0;
+
+      await supabase
+        .from("api_usage")
+        .upsert(
+          { date: today, call_count: currentCount + 1, updated_at: now },
+          { onConflict: "date" }
+        );
+
+      // 3. Refresh the displayed usage
+      setUsage({ count: currentCount + 1, updated_at: now });
     } catch {
       setSyncResult({ success: false, message: "An unexpected error occurred during sync." });
     } finally {
@@ -194,26 +197,20 @@ export default function SettingsPage() {
               <div className="flex flex-col gap-4 justify-center">
                 <Button
                   onClick={handleSync}
-                  disabled={isSyncing || isRateLimited}
+                  disabled={isSyncing}
                   className={`w-full h-14 rounded-2xl font-black text-sm tracking-widest transition-all ${
-                    isSyncing || isRateLimited
+                    isSyncing
                       ? "bg-muted text-muted-foreground cursor-not-allowed"
                       : "bg-primary hover:bg-primary/90 text-primary-foreground shadow-lg shadow-primary/20"
                   }`}
                 >
                   <RefreshCw className={`w-5 h-5 mr-3 ${isSyncing ? "animate-spin" : ""} transition-transform duration-700`} />
-                  {isSyncing ? "SYNCING..." : isRateLimited ? "UNAVAILABLE" : "START SYNC"}
+                  {isSyncing ? "SYNCING..." : "START SYNC"}
                 </Button>
 
-                {isRateLimited && lastSyncTime && nextSyncTime ? (
-                  <p className="text-center text-[9px] font-bold text-amber-500 tracking-wide uppercase leading-relaxed">
-                    Rate limited — next sync at {new Date(nextSyncTime).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
-                  </p>
-                ) : (
-                  <p className="text-center text-[9px] font-bold text-muted-foreground italic tracking-wide uppercase opacity-50">
-                    Data updates automatically
-                  </p>
-                )}
+                <p className="text-center text-[9px] font-bold text-muted-foreground italic tracking-wide uppercase opacity-50">
+                  Data updates automatically
+                </p>
               </div>
             </div>
           </CardContent>
