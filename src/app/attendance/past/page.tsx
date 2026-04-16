@@ -31,7 +31,7 @@ interface AttendanceLog {
   user_id: number;
   timestamp: string;
   device_ip: string;
-  synced_to_zoho: boolean;
+  synced_to_zoho_status: string;
   synced_at: string;
   zoho_sync_error: string | null;
   check_type: number;
@@ -161,7 +161,7 @@ export default function PastDayPage() {
         .update({
           timestamp: newTimestamp,
           device_ip: newDeviceIp,
-          synced_to_zoho: false
+          synced_to_zoho_status: "false"
         })
         .eq("id", editingLog.id);
 

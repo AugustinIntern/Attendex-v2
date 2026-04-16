@@ -16,7 +16,7 @@ interface AttendanceLog {
   user_id: number;
   timestamp: string;
   device_ip: string;
-  synced_to_zoho: boolean;
+  synced_to_zoho_status: string;
   synced_at: string;
   zoho_sync_error: string | null;
   check_type: number;
