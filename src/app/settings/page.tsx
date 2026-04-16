@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import AppLayout from "@/components/AppLayout";
-import { RefreshCw, CheckCircle2, AlertCircle, Info, Database, ShieldCheck, Zap, HelpCircle, ArrowRight, Activity } from "lucide-react";
+import { RefreshCw, CheckCircle2, AlertCircle, Database, ShieldCheck, Zap, HelpCircle, Activity, Clock } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -10,17 +10,22 @@ import { supabase } from "@/lib/supabase";
 
 const RATE_LIMIT_HOURS = 4;
 const RATE_LIMIT_MS = RATE_LIMIT_HOURS * 60 * 60 * 1000;
+const DAILY_LIMIT = 10000;
 
 export default function SettingsPage() {
   const [isSyncing, setIsSyncing] = useState(false);
   const [lastSyncTime, setLastSyncTime] = useState<number | null>(null);
   const [nextSyncTime, setNextSyncTime] = useState<number | null>(null);
   const [isRateLimited, setIsRateLimited] = useState(false);
-  
+  const [syncResult, setSyncResult] = useState<{
+    success: boolean;
+    message: string;
+    details?: any;
+  } | null>(null);
+
   // API Usage State
   const [usage, setUsage] = useState<{ count: number; updated_at: string } | null>(null);
   const [loadingUsage, setLoadingUsage] = useState(true);
-  const DAILY_LIMIT = 10000;
 
   useEffect(() => {
     const storedTime = localStorage.getItem("lastZohoSync");
@@ -33,12 +38,10 @@ export default function SettingsPage() {
       }
     }
 
-    // Fetch API Usage
     const fetchUsage = async () => {
       try {
         setLoadingUsage(true);
-        const today = new Date().toISOString().split('T')[0];
-        
+        const today = new Date().toISOString().split("T")[0];
         const { data, error } = await supabase
           .from("api_usage")
           .select("call_count, updated_at")
@@ -49,10 +52,7 @@ export default function SettingsPage() {
           console.error("Error fetching API usage:", error);
           setUsage(null);
         } else if (data && data.length > 0) {
-          setUsage({
-            count: data[0].call_count,
-            updated_at: data[0].updated_at
-          });
+          setUsage({ count: data[0].call_count, updated_at: data[0].updated_at });
         } else {
           setUsage(null);
         }
@@ -64,28 +64,16 @@ export default function SettingsPage() {
     };
 
     fetchUsage();
-    // Refresh usage every 5 minutes
     const interval = setInterval(fetchUsage, 5 * 60 * 1000);
     return () => clearInterval(interval);
   }, []);
-
-  const [syncResult, setSyncResult] = useState<{
-    success: boolean;
-    message: string;
-    details?: any;
-  } | null>(null);
 
   const handleSync = async () => {
     try {
       setIsSyncing(true);
       setSyncResult(null);
-
-      const response = await fetch("/api/employees/sync", {
-        method: "POST",
-      });
-
+      const response = await fetch("/api/employees/sync", { method: "POST" });
       const data = await response.json();
-      
       if (data.success) {
         const now = Date.now();
         localStorage.setItem("lastZohoSync", now.toString());
@@ -93,266 +81,260 @@ export default function SettingsPage() {
         setIsRateLimited(true);
         setNextSyncTime(now + RATE_LIMIT_MS);
       }
-
       setSyncResult({
         success: data.success,
-        message: data.success 
-          ? data.message 
-          : (data.error || "Failed to sync with Zoho People"),
-        details: data.details
+        message: data.success ? data.message : (data.error || "Failed to sync with Zoho People"),
+        details: data.details,
       });
-    } catch (error) {
-      setSyncResult({
-        success: false,
-        message: "An unexpected error occurred during sync."
-      });
+    } catch {
+      setSyncResult({ success: false, message: "An unexpected error occurred during sync." });
     } finally {
       setIsSyncing(false);
     }
   };
 
+  const usageCount = usage?.count || 0;
+  const usagePct = Math.min((usageCount / DAILY_LIMIT) * 100, 100);
+  const usageColor =
+    usagePct < 50 ? "bg-emerald-500" : usagePct < 85 ? "bg-amber-500" : "bg-destructive";
+  const usageStatusColor =
+    usagePct < 85 ? "text-emerald-500" : "text-destructive";
+
   return (
     <AppLayout>
-      <div className="max-w-6xl mx-auto space-y-12">
+      <div className="max-w-5xl mx-auto space-y-10">
+
         {/* Page Header */}
-        <div className="flex flex-col md:flex-row md:items-end justify-between gap-6">
+        <div className="flex items-center justify-between">
           <div>
-            <h1 className="text-5xl font-extrabold text-foreground tracking-tighter">
-              Settings
-            </h1>
-            <p className="text-muted-foreground mt-2 text-lg font-medium">
-              Manage system configurations and employee data syncing.
+            <h1 className="text-4xl font-extrabold text-foreground tracking-tight">Settings</h1>
+            <p className="text-muted-foreground mt-1 font-medium">
+              Manage system configurations and integrations.
             </p>
           </div>
-          <Badge variant="outline" className="h-10 px-6 rounded-xl border-primary/30 text-primary font-black text-[10px] tracking-widest bg-primary/5">ADMIN ACCESS</Badge>
+          <Badge variant="outline" className="h-9 px-5 rounded-xl border-primary/30 text-primary font-black text-[10px] tracking-widest bg-primary/5">
+            ADMIN ACCESS
+          </Badge>
         </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-10">
-          {/* Main Integration Section */}
-          <div className="lg:col-span-2 space-y-10">
-            <Card className="rounded-[3rem] border-muted bg-background shadow-2xl overflow-hidden relative group">
-               <div className="absolute top-0 right-0 p-10">
-                  <Database className="w-12 h-12 text-muted-foreground opacity-10 group-hover:opacity-20 transition-opacity" />
-               </div>
-               
-               <CardHeader className="p-10 border-b border-muted bg-muted/5">
-                 <div className="flex items-center gap-6">
-                    <div className="w-20 h-20 rounded-3xl bg-primary/10 flex items-center justify-center shadow-xl group-hover:bg-primary transition-all duration-500">
-                       <RefreshCw className="text-primary group-hover:text-primary-foreground w-10 h-10" />
+        {/* Zoho Integration Card — full width */}
+        <Card className="rounded-[2.5rem] border-muted bg-background shadow-xl overflow-hidden">
+          <CardHeader className="p-8 border-b border-muted bg-muted/5">
+            <div className="flex items-center gap-5">
+              <div className="w-14 h-14 rounded-2xl bg-primary/10 flex items-center justify-center shrink-0">
+                <RefreshCw className="text-primary w-7 h-7" />
+              </div>
+              <div>
+                <CardTitle className="text-2xl font-black tracking-tight">Zoho Integration</CardTitle>
+                <CardDescription className="text-muted-foreground font-bold text-[10px] uppercase tracking-widest mt-0.5">
+                  Employee Data Sync
+                </CardDescription>
+              </div>
+            </div>
+          </CardHeader>
+
+          <CardContent className="p-8">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-8 items-start">
+
+              {/* Validation Rules */}
+              <div className="space-y-5">
+                <h3 className="text-[10px] font-black text-muted-foreground uppercase tracking-[0.2em] flex items-center gap-2">
+                  <ShieldCheck className="w-3.5 h-3.5 text-emerald-500" />
+                  Validation Rules
+                </h3>
+                <div className="space-y-4">
+                  {[
+                    { title: "ID Verification", desc: "Matching employee IDs." },
+                    { title: "Data Accuracy", desc: "Checking for required information." },
+                    { title: "Employee Import", desc: "Adding new employees to the system." },
+                  ].map((item, i) => (
+                    <div key={i} className="flex gap-3">
+                      <div className="w-1.5 h-1.5 rounded-full bg-primary mt-2 shrink-0" />
+                      <div>
+                        <p className="text-foreground font-bold text-sm">{item.title}</p>
+                        <p className="text-muted-foreground text-xs leading-relaxed">{item.desc}</p>
+                      </div>
                     </div>
+                  ))}
+                </div>
+              </div>
+
+              {/* Sync Status */}
+              <div className="bg-muted/20 rounded-2xl p-6 border border-muted">
+                <h3 className="text-[10px] font-black text-muted-foreground uppercase tracking-[0.2em] mb-5 flex items-center gap-2">
+                  <Zap className="w-3.5 h-3.5 text-amber-500" />
+                  Sync Status
+                </h3>
+                {syncResult ? (
+                  <div className={`space-y-3 ${syncResult.success ? "text-emerald-500" : "text-destructive"}`}>
+                    <div className="flex items-center gap-2">
+                      {syncResult.success ? <CheckCircle2 className="w-5 h-5" /> : <AlertCircle className="w-5 h-5" />}
+                      <p className="font-black text-xs uppercase tracking-widest">
+                        {syncResult.success ? "SYNC SUCCESSFUL" : "SYNC FAILED"}
+                      </p>
+                    </div>
+                    <p className="text-xs font-medium leading-relaxed opacity-80">{syncResult.message}</p>
+                    {syncResult.details && (
+                      <div className="mt-4 pt-4 border-t border-muted">
+                        <p className="text-[9px] uppercase font-black tracking-widest text-muted-foreground">Employees Loaded</p>
+                        <p className="text-3xl font-black text-foreground mt-1">{syncResult.details.total}</p>
+                      </div>
+                    )}
+                  </div>
+                ) : (
+                  <div className="flex flex-col items-center justify-center py-6 text-center text-muted-foreground/40">
+                    <Database className="w-10 h-10 mb-3 opacity-10" />
+                    <p className="text-[10px] font-bold uppercase tracking-widest">Ready</p>
+                    <p className="text-[9px] mt-1">Click Start Sync below</p>
+                  </div>
+                )}
+              </div>
+
+              {/* Sync Button + Rate Limit */}
+              <div className="flex flex-col gap-4 justify-center">
+                <Button
+                  onClick={handleSync}
+                  disabled={isSyncing || isRateLimited}
+                  className={`w-full h-14 rounded-2xl font-black text-sm tracking-widest transition-all ${
+                    isSyncing || isRateLimited
+                      ? "bg-muted text-muted-foreground cursor-not-allowed"
+                      : "bg-primary hover:bg-primary/90 text-primary-foreground shadow-lg shadow-primary/20"
+                  }`}
+                >
+                  <RefreshCw className={`w-5 h-5 mr-3 ${isSyncing ? "animate-spin" : ""} transition-transform duration-700`} />
+                  {isSyncing ? "SYNCING..." : isRateLimited ? "UNAVAILABLE" : "START SYNC"}
+                </Button>
+
+                {isRateLimited && lastSyncTime && nextSyncTime ? (
+                  <p className="text-center text-[9px] font-bold text-amber-500 tracking-wide uppercase leading-relaxed">
+                    Rate limited — next sync at {new Date(nextSyncTime).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
+                  </p>
+                ) : (
+                  <p className="text-center text-[9px] font-bold text-muted-foreground italic tracking-wide uppercase opacity-50">
+                    Data updates automatically
+                  </p>
+                )}
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Bottom Row: API Usage + Add Employee Guide */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+
+          {/* API Usage Card */}
+          <Card className="rounded-[2.5rem] border-muted bg-background shadow-xl overflow-hidden">
+            <CardHeader className="p-8 border-b border-muted bg-muted/5">
+              <div className="flex items-center gap-5">
+                <div className="w-14 h-14 rounded-2xl bg-primary/10 flex items-center justify-center shrink-0">
+                  <Activity className="text-primary w-7 h-7" />
+                </div>
+                <div>
+                  <CardTitle className="text-2xl font-black tracking-tight">API Usage</CardTitle>
+                  <CardDescription className="text-muted-foreground font-bold text-[10px] uppercase tracking-widest mt-0.5">
+                    Zoho People Daily Credits
+                  </CardDescription>
+                </div>
+              </div>
+            </CardHeader>
+
+            <CardContent className="p-8">
+              {loadingUsage ? (
+                <div className="space-y-4 py-2">
+                  <div className="h-10 w-1/2 bg-muted animate-pulse rounded-xl" />
+                  <div className="h-3 w-full bg-muted animate-pulse rounded-full" />
+                  <div className="h-3 w-2/3 bg-muted animate-pulse rounded-full" />
+                </div>
+              ) : (
+                <div className="space-y-6">
+                  {/* Credit counts */}
+                  <div className="flex items-end justify-between">
                     <div>
-                       <CardTitle className="text-3xl font-black tracking-tight">Zoho Integration</CardTitle>
-                       <CardDescription className="text-muted-foreground font-bold text-sm mt-1 uppercase tracking-widest">DATA SYNC</CardDescription>
+                      <p className="text-4xl font-black tracking-tighter text-foreground">
+                        {usageCount.toLocaleString()}
+                      </p>
+                      <p className="text-xs font-bold text-muted-foreground uppercase tracking-widest mt-1">
+                        / {DAILY_LIMIT.toLocaleString()} credits used today
+                      </p>
                     </div>
-                 </div>
-               </CardHeader>
-
-               <CardContent className="p-10 space-y-12">
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-10">
-                     <div className="space-y-6">
-                        <h3 className="text-[10px] font-black text-muted-foreground uppercase tracking-[0.2em] flex items-center gap-2">
-                           <ShieldCheck className="w-4 h-4 text-emerald-500" />
-                           Validation Rules
-                        </h3>
-                        <div className="space-y-4">
-                           {[
-                             { title: "ID Verification", desc: "Matching employee IDs." },
-                             { title: "Data Accuracy", desc: "Checking for required information." },
-                             { title: "Employee Import", desc: "Adding new employees to the system." }
-                           ].map((item, i) => (
-                             <div key={i} className="flex gap-4">
-                               <div className="w-1.5 h-1.5 rounded-full bg-primary mt-1.5 shrink-0" />
-                               <div>
-                                 <p className="text-foreground font-black text-sm">{item.title}</p>
-                                 <p className="text-muted-foreground text-[11px] font-medium leading-relaxed">{item.desc}</p>
-                               </div>
-                             </div>
-                           ))}
-                        </div>
-                     </div>
-
-                     <div className="bg-muted/20 rounded-[2rem] p-8 border border-muted group-hover:border-primary/20 transition-colors">
-                        <h3 className="text-[10px] font-black text-muted-foreground uppercase tracking-[0.2em] mb-6 flex items-center gap-2">
-                           <Zap className="w-4 h-4 text-amber-500" />
-                           Sync Status
-                        </h3>
-                        
-                        {syncResult ? (
-                          <div className={`space-y-4 ${syncResult.success ? "text-emerald-500" : "text-destructive"}`}>
-                            <div className="flex items-center gap-3">
-                              {syncResult.success ? <CheckCircle2 className="w-6 h-6" /> : <AlertCircle className="w-6 h-6" />}
-                              <p className="font-black text-sm uppercase tracking-widest">{syncResult.success ? "SYNC SUCCESSFUL" : "SYNC FAILED"}</p>
-                            </div>
-                            <p className="text-xs font-bold leading-relaxed opacity-80">
-                              {syncResult.message}
-                            </p>
-                            {syncResult.details && (
-                               <div className="mt-6 pt-6 border-t border-muted">
-                                <p className="text-[9px] uppercase font-black tracking-widest text-muted-foreground">Employees Loaded</p>
-                                <p className="text-4xl font-black text-foreground mt-2">{syncResult.details.total}</p>
-                               </div>
-                            )}
-                          </div>
-                        ) : (
-                          <div className="flex flex-col items-center justify-center py-8 text-muted-foreground/40 italic text-center">
-                            <Database className="w-12 h-12 mb-4 opacity-10 group-hover:scale-110 transition-transform" />
-                            <p className="text-[10px] font-bold uppercase tracking-widest">Ready</p>
-                            <p className="text-[9px] mt-1">Click button below to sync</p>
-                          </div>
-                        )}
-                     </div>
+                    <div className="text-right">
+                      <p className={`text-xs font-black uppercase tracking-widest ${usageStatusColor}`}>
+                        {usagePct >= 100 ? "At Limit" : usagePct >= 85 ? "Critical" : usagePct >= 50 ? "Moderate" : "Healthy"}
+                      </p>
+                      <p className="text-[10px] text-muted-foreground font-medium mt-0.5">
+                        {(100 - usagePct).toFixed(1)}% remaining
+                      </p>
+                    </div>
                   </div>
 
-                  <div className="pt-4">
-                     <Button
-                       onClick={handleSync}
-                       disabled={isSyncing || isRateLimited}
-                       className={`w-full h-20 rounded-2xl font-black text-lg tracking-widest group transition-all ${
-                         isSyncing || isRateLimited
-                           ? "bg-muted text-muted-foreground cursor-not-allowed" 
-                           : "bg-primary hover:bg-primary/90 text-primary-foreground shadow-2xl shadow-primary/30"
-                       }`}
-                     >
-                       <RefreshCw className={`w-6 h-6 mr-4 ${isSyncing ? "animate-spin" : isRateLimited ? "" : "group-hover:rotate-180"} transition-transform duration-700`} />
-                       {isSyncing ? "SYNCING..." : isRateLimited ? "SYNC UNAVAILABLE" : "START SYNC"}
-                     </Button>
-                     
-                     {isRateLimited && lastSyncTime && nextSyncTime ? (
-                        <p className="text-center text-[10px] font-bold text-amber-500 mt-6 tracking-wide uppercase">
-                           * RATE LIMITED: Last synced at {new Date(lastSyncTime).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })} — Next sync available at {new Date(nextSyncTime).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-                        </p>
-                     ) : (
-                        <p className="text-center text-[10px] font-bold text-muted-foreground mt-6 italic tracking-wide uppercase opacity-50">
-                           * DATA IS UPDATED AUTOMATICALLY.
-                        </p>
-                     )}
+                  {/* Progress bar */}
+                  <div className="space-y-2">
+                    <div className="w-full h-2.5 bg-muted rounded-full overflow-hidden">
+                      <div
+                        className={`h-full rounded-full transition-all duration-1000 ${usageColor}`}
+                        style={{ width: `${usagePct}%` }}
+                      />
+                    </div>
+                    <div className="flex justify-between text-[9px] font-bold text-muted-foreground uppercase tracking-widest">
+                      <span>0</span>
+                      <span>5,000</span>
+                      <span>10,000</span>
+                    </div>
                   </div>
-               </CardContent>
-            </Card>
-          </div>
 
-          {/* Sidebar Area */}
-          <div className="space-y-10">
-             {/* API Usage Section */}
-             <Card className="bg-background border-muted rounded-[2.5rem] overflow-hidden shadow-2xl relative group">
-                <CardHeader className="p-8 border-b border-muted bg-muted/5">
-                   <div className="flex items-center gap-4">
-                      <div className="w-12 h-12 rounded-2xl bg-primary/10 flex items-center justify-center">
-                         <Activity className="text-primary w-6 h-6" />
-                      </div>
-                      <div>
-                         <CardTitle className="text-xl font-black tracking-tight leading-tight">API Usage</CardTitle>
-                         <CardDescription className="text-muted-foreground font-black text-[9px] uppercase tracking-widest mt-0.5">Zoho People Credits</CardDescription>
-                      </div>
-                   </div>
-                </CardHeader>
-                <CardContent className="p-8">
-                   {loadingUsage ? (
-                      <div className="space-y-4 py-4">
-                         <div className="h-4 w-3/4 bg-muted animate-pulse rounded-full" />
-                         <div className="h-2 w-full bg-muted animate-pulse rounded-full" />
-                         <div className="h-3 w-1/2 bg-muted animate-pulse rounded-full" />
-                      </div>
-                   ) : (
-                      <div className="space-y-6">
-                         <div className="flex justify-between items-end">
-                            <div>
-                               <p className="text-3xl font-black tracking-tighter text-foreground">
-                                  {usage?.count?.toLocaleString() || "0"}
-                               </p>
-                               <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest mt-1">
-                                  Credits used today
-                               </p>
-                            </div>
-                            <div className="text-right">
-                               <p className="text-xs font-black text-muted-foreground opacity-40">
-                                  LIMIT: {DAILY_LIMIT.toLocaleString()}
-                               </p>
-                            </div>
-                         </div>
+                  {/* Last updated */}
+                  {usage?.updated_at && (
+                    <div className="flex items-center gap-2 text-[10px] text-muted-foreground font-medium border-t border-muted pt-4">
+                      <Clock className="w-3 h-3 shrink-0" />
+                      <span>Last updated: {new Date(usage.updated_at).toLocaleString()}</span>
+                    </div>
+                  )}
+                </div>
+              )}
+            </CardContent>
+          </Card>
 
-                         <div className="w-full h-3 bg-muted rounded-full overflow-hidden">
-                            <div 
-                               className={`h-full transition-all duration-1000 ${
-                                  (usage?.count || 0) < DAILY_LIMIT * 0.5 
-                                     ? "bg-emerald-500" 
-                                     : (usage?.count || 0) < DAILY_LIMIT * 0.85 
-                                        ? "bg-amber-500" 
-                                        : "bg-destructive"
-                               }`}
-                               style={{ width: `${Math.min(((usage?.count || 0) / DAILY_LIMIT) * 100, 100)}%` }}
-                            />
-                         </div>
+          {/* Add Employee Guide */}
+          <Card className="rounded-[2.5rem] border-muted bg-background shadow-xl overflow-hidden">
+            <CardHeader className="p-8 border-b border-muted bg-muted/5">
+              <div className="flex items-center gap-5">
+                <div className="w-14 h-14 rounded-2xl bg-amber-500/10 flex items-center justify-center shrink-0">
+                  <HelpCircle className="text-amber-500 w-7 h-7" />
+                </div>
+                <div>
+                  <CardTitle className="text-2xl font-black tracking-tight">Add New Employee</CardTitle>
+                  <CardDescription className="text-muted-foreground font-bold text-[10px] uppercase tracking-widest mt-0.5">
+                    Step-by-Step Guide
+                  </CardDescription>
+                </div>
+              </div>
+            </CardHeader>
 
-                         <div className="flex items-center justify-between text-[10px] font-bold uppercase tracking-widest">
-                            <span className={
-                               (usage?.count || 0) < DAILY_LIMIT * 0.85 ? "text-emerald-500" : "text-destructive"
-                            }>
-                               {(usage?.count || 0) >= DAILY_LIMIT ? "Full Capacity" : "Status: Operational"}
-                            </span>
-                            <span className="text-muted-foreground opacity-50">
-                               Updated {usage?.updated_at ? new Date(usage.updated_at).toLocaleString() : "Recently"}
-                            </span>
-                         </div>
+            <CardContent className="p-8">
+              <div className="space-y-6">
+                {[
+                  { step: "01", title: "Zoho Setup", desc: "Add them in Zoho People first with a correct Employee ID." },
+                  { step: "02", title: "Sync App", desc: 'Click "Start Sync" above to import them automatically.' },
+                  { step: "03", title: "Verify", desc: "Check the Active Employees list to confirm the record." },
+                  { step: "04", title: "Biometrics", desc: "Get their Code & User ID from the profile to register the device." },
+                ].map((item, i) => (
+                  <div key={i} className="flex gap-4 relative group/step">
+                    <div className="flex flex-col items-center shrink-0">
+                      <div className="w-9 h-9 rounded-xl bg-muted border border-muted-foreground/10 flex items-center justify-center font-black text-xs text-muted-foreground group-hover/step:bg-primary group-hover/step:text-primary-foreground group-hover/step:border-primary transition-all duration-300">
+                        {item.step}
                       </div>
-                   )}
-                </CardContent>
-             </Card>
+                      {i < 3 && <div className="w-px flex-1 bg-muted-foreground/10 my-1.5 group-hover/step:bg-primary/30 transition-colors" />}
+                    </div>
+                    <div className="pb-1 pt-1">
+                      <p className="text-sm font-black text-foreground">{item.title}</p>
+                      <p className="text-xs text-muted-foreground font-medium leading-relaxed mt-0.5">{item.desc}</p>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </CardContent>
+          </Card>
 
-             <Card className="bg-background border-muted rounded-[2.5rem] overflow-hidden shadow-2xl shadow-primary/10 group">
-                <CardHeader className="p-8 border-b border-muted bg-muted/5">
-                   <div className="flex items-center gap-4">
-                      <div className="w-12 h-12 rounded-2xl bg-amber-500/10 flex items-center justify-center">
-                         <HelpCircle className="text-amber-500 w-6 h-6" />
-                      </div>
-                      <div>
-                         <CardTitle className="text-xl font-black tracking-tight leading-tight">Add New Employee</CardTitle>
-                         <CardDescription className="text-muted-foreground font-black text-[9px] uppercase tracking-widest mt-0.5">Step-by-Step Guide</CardDescription>
-                      </div>
-                   </div>
-                </CardHeader>
-                <CardContent className="p-8">
-                   <div className="space-y-8">
-                      {[
-                         {
-                            step: "Step 1",
-                            title: "Zoho Setup",
-                            desc: "Add them in Zoho People first with a correct Employee ID."
-                         },
-                         {
-                            step: "Step 2",
-                            title: "Sync App",
-                            desc: "Click \"Start Sync\" here to import them automatically."
-                         },
-                         {
-                            step: "Step 3",
-                            title: "Verify",
-                            desc: "Check the Active Employees list to confirm the record."
-                         },
-                         {
-                            step: "Step 4",
-                            title: "Biometrics",
-                            desc: "Get their Code & User ID from the profile to register the device."
-                         }
-                      ].map((item, i) => (
-                         <div key={i} className="flex gap-5 relative group/step">
-                            <div className="flex flex-col items-center shrink-0">
-                               <div className="w-10 h-10 rounded-xl bg-muted border border-muted-foreground/10 flex items-center justify-center font-black text-[10px] text-muted-foreground group-hover/step:bg-primary group-hover/step:text-primary-foreground group-hover/step:border-primary transition-all duration-300">
-                                  {i + 1}
-                               </div>
-                               {i < 3 && <div className="w-px h-full bg-muted-foreground/10 mt-3 group-hover/step:bg-primary/30 transition-colors" />}
-                            </div>
-                            <div className="pb-2">
-                               <h4 className="text-[9px] font-black text-primary uppercase tracking-[0.2em] mb-1">{item.step}</h4>
-                               <h3 className="text-sm font-black text-foreground mb-1">{item.title}</h3>
-                               <p className="text-[11px] text-muted-foreground font-medium leading-relaxed">{item.desc}</p>
-                            </div>
-                         </div>
-                      ))}
-                   </div>
-                </CardContent>
-             </Card>
-          </div>
         </div>
       </div>
     </AppLayout>
